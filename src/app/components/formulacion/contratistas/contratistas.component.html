@@ -1,0 +1,298 @@
+<mat-card class="card-oas">
+  <mat-card-header>
+    <mat-card-title>Identificación de contratistas</mat-card-title>
+  </mat-card-header>
+  <mat-card-content>
+    <u class="textGuide">
+      A continuación usted encontrará los campos necesarios para identificar las necesidades de personal CPS que
+      requiere la dependencia para ejecutar el Plan
+    </u>
+    <br><br>
+
+
+    <form #myForm="ngForm" (ngSubmit)="submit(myForm)">
+      <ng-container>
+        <div class="label-rubro">Rubro:
+          <mat-select class="form-control" [(value)]="rubroSeleccionado" [disabled]="estadoPlan !== 'En formulación'">
+            <mat-option>--</mat-option>
+            <mat-option class="multiline-mat-option" *ngFor="let rubro of rubros" [value]="rubro">
+              {{rubro.Codigo}} - {{rubro.Nombre}}
+            </mat-option>
+          </mat-select>
+        </div>
+        <div class="label-inc">Incremento:
+          <mat-form-field [floatLabel]="floatLabelValue">
+            <input [readonly]="readonlyTable" min="0" type="number" matInput class="form-control"
+              (change)="actualizarIncremento()" [(ngModel)]="porcentajeIncremento" [ngModelOptions]="{standalone: true}"
+              placeholder="%" required>
+          </mat-form-field>
+        </div>
+      </ng-container>
+
+      <ng-container>
+        <div class="table-responsive">
+          <table mat-table [dataSource]="dataSource" matSort>
+            <!-- Descripción de Necesidad -->
+            <ng-container matColumnDef="descripcionNecesidad">
+              <th mat-header-cell *matHeaderCellDef [ngStyle]="{'display': 'none'}">Descripción de Necesidad</th>
+              <td mat-cell *matCellDef="let element">
+                <mat-form-field [floatLabel]="floatLabelValue">
+                  <textarea [readonly]="readonlyTable" class="form-control" matInput placeholder="Descripción"
+                    [value]="element.descripcionNecesidad" [(ngModel)]="element.descripcionNecesidad"
+                    [ngModelOptions]="{standalone: true}" required></textarea>
+                </mat-form-field>
+              </td>
+              <td mat-footer-cell *matFooterCellDef></td>
+            </ng-container>
+
+
+            <!-- Perfil -->
+            <ng-container matColumnDef="perfil">
+              <th mat-header-cell *matHeaderCellDef [ngStyle]="{'display': 'none'}">Perfil</th>
+              <td mat-cell *matCellDef="let element; let rowIndex = index">
+                <mat-form-field [floatLabel]="floatLabelValue">
+                  <mat-select [disabled]="readonlyTable" class="form-control" [(ngModel)]="element.perfil"
+                    [ngModelOptions]="{standalone: true}" (selectionChange)="onSelected($event, rowIndex)"
+                    placeholder="Perfil del contratista" required>
+                    <mat-option *ngFor="let perfil of perfiles" [value]="perfil.Id">
+                      {{perfil.Nombre}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </td>
+              <td mat-footer-cell *matFooterCellDef></td>
+            </ng-container>
+
+
+            <!-- Cantidad -->
+            <ng-container matColumnDef="cantidad">
+              <th mat-header-cell *matHeaderCellDef [ngStyle]="{'display': 'none'}">Cantidad</th>
+              <td mat-cell *matCellDef="let element; let rowIndex=index">
+                <mat-form-field [floatLabel]="floatLabelValue">
+                  <input [readonly]="readonlyTable" min="0" type="number" matInput class="form-control"
+                    placeholder="Cantidad" (change)="getTotal(element,rowIndex)" [value]="element.cantidad"
+                    [(ngModel)]="element.cantidad" [ngModelOptions]="{standalone: true}" required>
+                </mat-form-field>
+              </td>
+              <td mat-footer-cell *matFooterCellDef></td>
+            </ng-container>
+
+
+            <!-- Meses -->
+            <ng-container matColumnDef="meses">
+              <th mat-header-cell *matHeaderCellDef>Meses</th>
+              <td mat-cell *matCellDef="let element; let rowIndex = index">
+                <mat-form-field [floatLabel]="floatLabelValue">
+                  <input [readonly]="readonlyTable" min="1" max="12" class="form-control" matInput type="number"
+                    [value]="element.meses" (change)="getTotal(element,rowIndex)" [(ngModel)]="element.meses"
+                    [ngModelOptions]="{standalone: true}" required>
+                </mat-form-field>
+              </td>
+              <td mat-footer-cell *matFooterCellDef></td>
+            </ng-container>
+
+
+            <!-- Dias -->
+            <ng-container matColumnDef="dias">
+              <th mat-header-cell *matHeaderCellDef>Dias</th>
+              <td mat-cell *matCellDef="let element; let rowIndex = index">
+                <mat-form-field [floatLabel]="floatLabelValue">
+                  <input [readonly]="readonlyTable" min="1" max="29" class="form-control" matInput type="number"
+                    [value]="element.dias" (change)="getTotal(element,rowIndex)" [(ngModel)]="element.dias"
+                    [ngModelOptions]="{standalone: true}" required>
+                </mat-form-field>
+              </td>
+              <td mat-footer-cell *matFooterCellDef></td>
+            </ng-container>
+
+
+            <!-- Valor Unitario -->
+            <ng-container matColumnDef="valorUnitario">
+              <th mat-header-cell *matHeaderCellDef [ngStyle]="{'display': 'none'}">Valor Unitario</th>
+              <td mat-cell *matCellDef="let element; let rowIndex = index">
+                <mat-form-field [floatLabel]="floatLabelValue">
+                  <input [readonly]="readonlyTable" class="form-control" type="text" matInput
+                    [value]="element.valorUnitario" (change)="updateValue(element, rowIndex)"
+                    [(ngModel)]="element.valorUnitario" [ngModelOptions]="{standalone: true}" required disabled>
+                </mat-form-field>
+              <td mat-footer-cell *matFooterCellDef class="footer">
+                Total
+              </td>
+            </ng-container>
+
+            <!-- Valor Unitario Incremento -->
+            <ng-container matColumnDef="valorUnitarioInc">
+              <th mat-header-cell *matHeaderCellDef [ngStyle]="{'display': 'none'}">Valor Unitario con Incremento</th>
+              <td mat-cell *matCellDef="let element; let rowIndex = index">
+                <mat-form-field [floatLabel]="floatLabelValue">
+                  <input [readonly]="readonlyTable" class="form-control" type="text" matInput
+                    [value]="element.valorUnitarioInc"
+                    [(ngModel)]="element.valorUnitarioInc" [ngModelOptions]="{standalone: true}" required disabled>
+                </mat-form-field>
+              <td mat-footer-cell *matFooterCellDef class="footer"></td>
+            </ng-container>
+
+            <!-- Valor Total -->
+            <ng-container matColumnDef="valorTotal">
+              <th mat-header-cell *matHeaderCellDef [ngStyle]="{'display': 'none'}">Valor Total</th>
+              <td mat-cell *matCellDef="let element; let rowIndex = index">
+                <mat-form-field [floatLabel]="floatLabelValue">
+                  <!-- <label>{{element.valorUnitario * element.cantidad | currency}}</label> -->
+                  <input [readonly]="readonlyTable" min="0" class="form-control" type="text" matInput
+                    [value]="element.valorTotal" [(ngModel)]="element.valorTotal" [ngModelOptions]="{standalone: true}"
+                    required readonly disabled>
+                </mat-form-field>
+              </td>
+              <td mat-footer-cell *matFooterCellDef class="footer">
+                <p>{{getValorTotal() | currency}}</p>
+              </td>
+            </ng-container>
+
+            <!-- Valor Total Incremento -->
+            <ng-container matColumnDef="valorTotalInc">
+              <th mat-header-cell *matHeaderCellDef [ngStyle]="{'display': 'none'}">Valor Total con Incremento</th>
+              <td mat-cell *matCellDef="let element; let rowIndex = index">
+                <mat-form-field [floatLabel]="floatLabelValue">
+                  <!-- <label>{{element.valorUnitario * element.cantidad | currency}}</label> -->
+                  <input [readonly]="readonlyTable" min="0" class="form-control" type="text" matInput
+                    [value]="element.valorTotalInc" [(ngModel)]="element.valorTotalInc"
+                    [ngModelOptions]="{standalone: true}" required readonly disabled>
+                </mat-form-field>
+              </td>
+              <td mat-footer-cell *matFooterCellDef class="footer">
+                <p>{{getValorTotalInc() | currency}}</p>
+              </td>
+            </ng-container>
+
+
+
+            <!-- Actividades -->
+            <ng-container matColumnDef="actividades">
+              <th mat-header-cell *matHeaderCellDef [ngStyle]="{'display': 'none'}">Actividades</th>
+              <td mat-cell *matCellDef="let element">
+                <mat-form-field [floatLabel]="floatLabelValue">
+                  <mat-select [disabled]="readonlyTable" placeholder="Actividades" class="form-control"
+                    [(ngModel)]="element.actividades" [ngModelOptions]="{standalone: true}"
+                    [value]="selectedActividades" (selectionChange)="onChange($event.value)" required multiple>
+                    <mat-option *ngFor="let actividad of actividades" [value]="actividad.index">
+                      {{"Actividad No. " + actividad.index}}
+                    </mat-option>
+                  </mat-select>
+                </mat-form-field>
+              </td>
+              <td mat-footer-cell *matFooterCellDef></td>
+            </ng-container>
+
+            <!-- Observaciones -->
+            <ng-container matColumnDef="observaciones">
+              <th mat-header-cell *matHeaderCellDef [ngStyle]="{'display': 'none'}">Observaciones</th>
+              <td mat-cell *matCellDef="let element">
+                <mat-form-field [floatLabel]="floatLabelValue">
+                  <textarea [readonly]="readonlyObs" class="form-control" matInput placeholder="Observaciones"
+                    [value]="element.observaciones" [(ngModel)]="element.observaciones"
+                    [ngModelOptions]="{standalone: true}"></textarea>
+                </mat-form-field>
+              </td>
+              <td mat-footer-cell *matFooterCellDef></td>
+            </ng-container>
+
+
+            <!-- Acciones -->
+            <ng-container matColumnDef="acciones">
+              <th mat-header-cell *matHeaderCellDef [ngStyle]="{'display': 'none'}">
+                <button [disabled]="readonlyTable" class="material-icons" matTooltip="Agregar elemento"
+                  matTooltipPosition="right" mat-icon-button (click)="addContratista()">
+                  <mat-icon>add_box</mat-icon>
+                </button>
+              </th>
+              <td mat-cell *matCellDef="let element; let rowIndex = index">
+                <button [disabled]="readonlyTable" class="material-icons-delete" matTooltip="Eliminar elemento"
+                  matTooltipPosition="right" mat-icon-button (click)="deleteContratista(rowIndex)">
+                  <mat-icon>delete_outline</mat-icon>
+                </button>
+              </td>
+              <td mat-footer-cell *matFooterCellDef></td>
+            </ng-container>
+
+
+
+            <!-- Headers-->
+            <ng-container matColumnDef="TiempoContrato">
+              <th id="col-combinado" mat-header-cell *matHeaderCellDef [style.text-align]="'center'" [attr.colspan]="2">
+                Tiempo de Contrato</th>
+            </ng-container>
+
+            <ng-container matColumnDef="DescripcionNecesidadP">
+              <th mat-header-cell *matHeaderCellDef [attr.rowspan]="2">Descripcion de Necesidad</th>
+            </ng-container>
+
+            <ng-container matColumnDef="PerfilP">
+              <th mat-header-cell *matHeaderCellDef [attr.rowspan]="2">Perfil</th>
+            </ng-container>
+
+            <ng-container matColumnDef="CantidadP">
+              <th mat-header-cell *matHeaderCellDef [attr.rowspan]="2">Cantidad</th>
+            </ng-container>
+
+            <ng-container matColumnDef="ValorUnitarioP">
+              <th mat-header-cell *matHeaderCellDef [attr.rowspan]="2">Valor Unitario</th>
+            </ng-container>
+
+            <ng-container matColumnDef="ValorUnitarioIncP">
+              <th mat-header-cell *matHeaderCellDef [attr.rowspan]="2">Valor Unitario con Incremento</th>
+            </ng-container>
+
+            <ng-container matColumnDef="ValorTotalP">
+              <th mat-header-cell *matHeaderCellDef [attr.rowspan]="2">Valor Total</th>
+            </ng-container>
+
+            <ng-container matColumnDef="ValorTotalIncP">
+              <th mat-header-cell *matHeaderCellDef [attr.rowspan]="2">Valor Total con Incremento</th>
+            </ng-container>
+
+            <ng-container matColumnDef="ActividadesP">
+              <th mat-header-cell *matHeaderCellDef [attr.rowspan]="2">Actividades</th>
+            </ng-container>
+
+            <ng-container matColumnDef="ObservacionesP">
+              <th mat-header-cell *matHeaderCellDef [attr.rowspan]="2">Observaciones</th>
+            </ng-container>
+
+            <ng-container matColumnDef="AccionesP">
+              <th mat-header-cell *matHeaderCellDef [attr.rowspan]="2">
+                <button [disabled]="readonlyTable" class="material-icons" matTooltip="Agregar elemento"
+                  matTooltipPosition="right" mat-icon-button (click)="addContratista()">
+                  <mat-icon>add_box</mat-icon>
+                </button>
+              </th>
+            </ng-container>
+
+
+            <tr mat-header-row *matHeaderRowDef="displayedHeaders" class="example-second-header-row">
+            </tr>
+            <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+            <tr mat-row *matRowDef="let row; columns: displayedColumns;"></tr>
+            <tr mat-footer-row *matFooterRowDef="displayedColumns"></tr>
+
+
+          </table>
+        </div>
+        <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" aria-label="Select page of users"></mat-paginator>
+
+      </ng-container>
+    </form>
+  </mat-card-content>
+  <mat-card-footer style="text-align: center;">
+    <mat-card-content *ngIf="estadoPlan == 'En formulación' ||(estadoPlan == 'En revisión' && !readonlyObs)">
+      <u class="textGuide">
+        Para guardar los cambios de clic en guardar de lo contrario seleccione cerrar
+      </u>
+    </mat-card-content>
+    <ng-container>
+      <button mat-raised-button style="margin: 10px;" color="primary" type="submit" class="col-3 mt-2 mb-3"
+        (click)="ocultarContratistas()">Cerrar</button>
+      <button mat-raised-button style="margin: 10px;" color="primary" type="submit" class="col-3 mt-2 mb-3"
+        (click)="guardarContratistas()" *ngIf="!readonlyObs || estadoPlan === 'En formulación'">Guardar</button>
+    </ng-container>
+  </mat-card-footer>
+</mat-card>

@@ -1,0 +1,141 @@
+.mat-card{
+  background-color: #F1F5F8;
+}
+
+
+table {
+    width: 100%;
+    margin-bottom: 2%;
+}
+
+th {
+    color: white;
+    text-align: center !important;
+}
+
+td{
+  text-align: justify;
+}
+
+.td-align-left{
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.td-align-right{
+  text-align: center;
+}
+
+.header-align-right{
+  padding: 21px 0;
+
+}
+
+
+
+.mat-raised-button{
+  text-align: center !important;
+  margin: 1%;
+  width: 20%;
+  align-self: center;
+  display: inline;
+}
+
+.btn-formato{
+  align-content: center;
+  display: flex;
+}
+
+
+
+#box {
+  border: 3px solid;
+}
+
+.container {
+  width: 200px;
+  vertical-align: middle;
+  align-content: center;
+  justify-content: center;
+  text-align: center;
+}
+.flex {
+  display: flex;
+  vertical-align: middle;
+  align-content: center;
+  justify-content: center;
+  text-align: center;
+}
+
+.sameRow {
+  border: 3px solid black;
+  justify-content: center;
+  text-align: center;
+  align-content: center;
+  vertical-align: middle;
+  padding: 10px;
+  font-size: 15px;
+  margin-top: 2%;
+  margin-right: 5%;
+  color: var(--primary);
+  border-radius: 8px;
+  border-color: var(--primary);
+}
+
+.container{
+  display: block !important;
+  margin-top: 30px;
+  margin-bottom: 30px;
+  margin-left: auto;
+  margin-right: auto;
+  width: 50%;
+}
+
+.notice{
+  display:  block !important;
+  width: fit-content;
+  margin-top: 20px;
+  margin-bottom: 20px;
+  margin-left: 30px;
+  margin-right: auto;
+  background-color: lightyellow;
+  font-style: oblique;
+}
+
+.icon-estado{
+  font-size: 40px;
+}
+
+.textGuide{
+  background-color: #ffff;
+  border: 1px solid var(--primary);
+  border-radius: 15px 15px 15px 15px;
+  box-shadow: var(--primary) 3px 4px 0;
+  color: #0a0a0a;
+  display: inline-block;
+  font-size: 1.1em;
+  padding: 1%;
+  text-decoration: none;
+  margin-bottom: 1%;
+  width: 97%;
+}
+
+.input-search{
+  width: 99%;
+  height: 30px;
+  border-radius: 5px 5px 5px 5px;
+}
+
+.toggle{
+  margin-left: 10%;
+  color: var(--primary);
+}
+
+::ng-deep .mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-thumb {
+  background-color: var(--primary);
+}
+
+::ng-deep .mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-bar {
+  background-color: rgb(145, 35, 35);
+}
+

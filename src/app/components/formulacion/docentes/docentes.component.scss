@@ -1,0 +1,167 @@
+table {
+  width: 100%;
+}
+
+th {
+  color: white;
+  text-align: center;
+}
+
+
+th.mat-header-cell {
+  text-align: center;
+  padding: 5px 5px 5px 0;
+  color: white;
+}
+
+td.mat-cell {
+  text-align: center;
+  padding: 5px 5px 5px 0;
+  color: black;
+}
+
+
+.header-align-right {
+  display: flex;
+  padding: 21px 0;
+  justify-content: flex-end;
+}
+
+
+::ng-deep input.mat-input-element {
+  color: #000000;
+  text-align: center;
+}
+
+
+::ng-deep textarea.mat-input-element {
+  color: #000000;
+}
+
+.material-icons-delete {
+  color: #000000;
+}
+
+.footer {
+  text-align: center;
+}
+
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+
+  .mat-table {
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 1rem;
+    display: table;
+    border-collapse: collapse;
+    margin: 0px;
+  }
+
+  .mat-row,
+  .mat-header-row {
+    display: table-row;
+    text-align: center;
+  }
+
+  .mat-cell,
+  .mat-header-cell {
+    text-align: center;
+    word-wrap: initial;
+    display: table-cell;
+    padding: 0px 5px;
+    line-break: unset;
+    width: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    vertical-align: middle;
+  }
+}
+
+.textGuide {
+  background-color: #ffff;
+  border: 1px solid var(--primary);
+  border-radius: 15px 15px 15px 15px;
+  box-shadow: var(--primary) 3px 4px 0;
+  color: #0a0a0a;
+  display: inline-block;
+  font-size: 1.1em;
+  padding: 1%;
+  text-decoration: none;
+  margin-bottom: 1%;
+  width: 97%;
+}
+
+.mat-raised-button {
+  margin: 0% 2% 0% 0%;
+}
+
+textarea {
+  resize: none;
+  text-align: justify;
+  white-space: pre-line;
+  -moz-text-align-last: left;
+  text-align-last: left;
+}
+
+.mat-row:nth-child(even) {
+  background-color: #E7D6D6;
+}
+
+.mat-row:nth-child(odd) {
+  background-color: white;
+}
+
+.header2 {
+  background-color: var(--color900);
+}
+
+.header3 {
+  background-color: var(--color800);
+}
+
+.header4 {
+  background-color: var(--color700);
+}
+
+.mat-form-field {
+  width: 100%;
+}
+
+.container-border {
+  margin: 3% 0% 0% 0%;
+  border: 1px solid var(--primary);
+  padding: 1%;
+  border-radius: 15px 15px 15px 15px;
+}
+
+.container-border h4 {
+  width: 17%;
+  background-color: var(--primary) !important;
+  color: #F1F5F8;
+  font-size: 15px;
+  margin-top: -28px;
+  margin-left: 7px;
+  padding: 0.5%;
+  position: relative;
+  border-radius: 15px 15px 15px 15px;
+  font-weight: normal;
+}
+
+.label-inc {
+  border: 1px solid var(--primary);
+  padding: 1%;
+  border-radius: 10px 10px 10px 10px;
+  width: fit-content;
+  margin-bottom: 1%;
+}
+
+.multiline-mat-option.mat-option {
+  white-space: normal;
+  line-height: normal;
+  height: unset;
+  padding-top: 0.9em;
+  padding-bottom: 0.9em;
+}
