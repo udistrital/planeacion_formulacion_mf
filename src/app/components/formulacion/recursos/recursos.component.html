@@ -1,0 +1,145 @@
+<mat-card class="card-oas">
+    <mat-card-header>
+        <mat-card-title>Identificación de recursos</mat-card-title>
+    </mat-card-header>
+    <mat-card-content>
+        <u class="textGuide">
+            A continuación usted encontrará los campos necesarios para identificar los bienes y servicios que se requieren para ejecutar el plan
+        </u>
+        <br><br>
+        <form #myForm="ngForm" (ngSubmit)="submit(myForm)">
+            <ng-container>
+                <mat-form-field appearance="fill" [style.width.%]="50">
+                    <mat-label>Búsqueda</mat-label>
+                    <input matInput (keyup)="applyFilter($event)" placeholder="Ej. Actividad" #input>
+                </mat-form-field>
+                <table mat-table [dataSource]="dataSource" matSort>
+                    <!-- Código del Rubro -->
+                    <ng-container matColumnDef="codigo">
+                        <th mat-header-cell *matHeaderCellDef> Código del rubro </th>
+                        <td mat-cell *matCellDef="let element">
+                            <mat-form-field floatLabel='auto'>
+                                <input disabled matInput class="form-control" placeholder="Código del rubro"
+                                    [value]="element.codigo" [(ngModel)]="element.codigo"
+                                    [ngModelOptions]="{standalone: true}" required readonly>
+                            </mat-form-field>
+                        </td>
+                        <td mat-footer-cell *matFooterCellDef></td>
+                    </ng-container>
+                    <!-- Nombre del rubro -->
+                    <ng-container matColumnDef="Nombre">
+                        <th mat-header-cell *matHeaderCellDef> Nombre del rubro </th>
+                        <td mat-cell *matCellDef="let element; let rowIndex = index">
+                            <mat-form-field floatLabel='auto'>
+                                <mat-select [disabled]="readonlyTable" class="form-control" [(ngModel)]="element.Nombre"
+                                    [ngModelOptions]="{standalone: true}"
+                                    (selectionChange)="onSelected($event, rowIndex)" placeholder="Nombre del rubro"
+                                    required>
+                                    <mat-option class="multiline-mat-option" *ngFor="let rubro of rubros" [value]="rubro.Nombre">
+                                        {{rubro.Nombre}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </td>
+                        <td mat-footer-cell *matFooterCellDef class="footer">Total</td>
+                    </ng-container>
+                    <!-- Valor -->
+                    <ng-container matColumnDef="valor">
+                        <th mat-header-cell *matHeaderCellDef > Valor </th>
+                        <td mat-cell *matCellDef="let element; let rowIndex = index">
+                            <mat-form-field floatLabel='auto'>
+                                <input [readonly]="readonlyTable" min="0" type="text" class="form-control" matInput
+                                    placeholder="Valor" [value]="element.valor" [(ngModel)]="element.valor" (change)="updateValue(element, rowIndex)"
+                                    [ngModelOptions]="{standalone: true}" required>
+                            </mat-form-field>
+                        </td>
+                        <td mat-footer-cell *matFooterCellDef class="footer">
+                            <p>{{getValorTotal() | currency}}</p>
+                        </td>
+                    </ng-container>
+                    <!-- Descripción -->
+                    <ng-container matColumnDef="descripcion">
+                        <th mat-header-cell *matHeaderCellDef> Descripción del bien y/o servicio
+                        </th>
+                        <td mat-cell *matCellDef="let element">
+                            <mat-form-field floatLabel='auto'>
+                                <textarea [readonly]="readonlyTable" class="form-control" matInput
+                                    placeholder="Descripción" [value]="element.descripcion"
+                                    [(ngModel)]="element.descripcion" [ngModelOptions]="{standalone: true}"
+                                    required></textarea>
+                            </mat-form-field>
+                        </td>
+                        <td mat-footer-cell *matFooterCellDef></td>
+                    </ng-container>
+                    <!-- Actividades -->
+                    <ng-container matColumnDef="actividades">
+                        <th mat-header-cell *matHeaderCellDef > Actividades </th>
+                        <td mat-cell *matCellDef="let element">
+                            <mat-form-field floatLabel='auto'>
+                                <mat-select [disabled]="readonlyTable" class="form-control"
+                                    [(ngModel)]="element.actividades" [ngModelOptions]="{standalone: true}"
+                                    [value]="selectedActividades" placeholder="Actividades"
+                                    (selectionChange)="onChange($event.value)" required multiple>
+                                    <mat-option *ngFor="let actividad of actividades" [value]="actividad.index">
+                                        {{"Actividad No. " + actividad.index}}
+                                    </mat-option>
+                                </mat-select>
+                            </mat-form-field>
+                        </td>
+                        <td mat-footer-cell *matFooterCellDef></td>
+                    </ng-container>
+                    <!-- Observaciones -->
+                    <ng-container matColumnDef="observaciones">
+                        <th mat-header-cell *matHeaderCellDef>Observaciones</th>
+                        <td mat-cell *matCellDef="let element">
+                            <mat-form-field floatLabel='auto'>
+                                <textarea class="form-control" matInput placeholder="Observaciones"
+                                    [value]="element.observaciones" [(ngModel)]="element.observaciones"
+                                    [ngModelOptions]="{standalone: true}" required [readonly]="readonlyObs"></textarea>
+                            </mat-form-field>
+                        </td>
+                        <td mat-footer-cell *matFooterCellDef></td>
+                    </ng-container>
+                    <!-- Actions -->
+                    <ng-container matColumnDef="acciones">
+                        <th mat-header-cell *matHeaderCellDef>
+                            <button   [disabled]="readonlyTable" class="material-icons" matTooltip="Agregar elemento"
+                                matTooltipPosition="right" mat-icon-button (click)="addElement()">
+                                <mat-icon>add_box</mat-icon>
+                            </button>
+                        </th>
+                        <td mat-cell *matCellDef="let element; let rowIndex = index">
+                            <button  class="material-icons" matTooltip="Eliminar elemento"
+                                matTooltipPosition="right" mat-icon-button (click)="deleteElement(rowIndex)">
+                                <mat-icon>delete_outline</mat-icon>
+                            </button>
+                        </td>
+                        <td mat-footer-cell *matFooterCellDef></td>
+                    </ng-container>
+
+                    <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+                    <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+                    <tr mat-footer-row *matFooterRowDef="displayedColumns"></tr>
+
+                    <!-- <tr class="mat-row" *matNoDataRow>
+                        <td class="mat-cell" colspan="4">No se han encontrado resultados para la búsqueda "{{input.value}}"</td>
+                    </tr> -->
+                </table>
+                <mat-paginator [pageSizeOptions]="[10, 25, 50, 100]" aria-label="Select page of users"></mat-paginator>
+            </ng-container>
+        </form>
+    </mat-card-content>
+    <mat-card-footer style="text-align: center;">
+        <mat-card-content *ngIf="estadoPlan == 'En formulación' ||(estadoPlan == 'En revisión' && !readonlyObs)">
+            <u class="textGuide">
+                Para guardar los cambios de clic en guardar de lo contrario seleccione cerrar
+            </u>
+        </mat-card-content>
+        <ng-container>
+            <button mat-raised-button style="margin: 10px;" color="primary" type="submit" class="col-3 mt-2 mb-3"
+                (click)="ocultarRecursos()">Cerrar</button>
+            <button mat-raised-button style="margin: 10px;" color="primary" type="submit"
+                class="col-3 mt-2 mb-3" (click)="guardarRecursos()" *ngIf="!readonlyObs || estadoPlan === 'En formulación'" >Guardar</button>
+        </ng-container>
+    </mat-card-footer>
+</mat-card>

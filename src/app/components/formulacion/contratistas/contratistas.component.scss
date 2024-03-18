@@ -1,0 +1,134 @@
+.mat-card{
+  background-color: #F1F5F8;
+}
+
+table {
+    width: 100%;
+  }
+
+th {
+    color: white;
+    text-align: center;
+}
+
+
+th.mat-header-cell, td.mat-cell {
+    text-align: center;
+    padding: 0 !important;
+    color:white;
+}
+
+
+
+.td-align-right{
+  text-align: right;
+  justify-content: flex-end;
+}
+
+.header-align-right{
+  display: flex;
+  padding: 21px 0;
+  justify-content: flex-end;
+}
+
+
+
+::ng-deep input.mat-input-element {
+  color: #000000;
+}
+
+
+::ng-deep textarea.mat-input-element {
+  color: #000000;
+}
+
+.material-icons-delete{
+  color: #000000;
+}
+
+.footer{
+  text-align: center;
+}
+
+.table-responsive {
+  display: block;
+  width: 100%;
+  overflow-x: auto;
+  .mat-table {
+      width: 100%;
+      max-width: 100%;
+      margin-bottom: 1rem;
+      display: table;
+      border-collapse: collapse;
+      margin: 0px;
+  }
+  .mat-row,
+  .mat-header-row {
+      display: table-row;
+      text-align: center;
+  }
+  .mat-cell,
+  .mat-header-cell {
+      text-align: center;
+      word-wrap: initial;
+      display: table-cell;
+      padding: 0px 5px;
+      line-break: unset;
+      width: auto;
+      white-space: nowrap;
+      overflow: hidden;
+      vertical-align: middle;
+  }
+}
+
+.textGuide{
+  background-color: #ffff;
+  border: 1px solid var(--primary);
+  border-radius: 15px 15px 15px 15px;
+  box-shadow: var(--primary) 3px 4px 0;
+  color: #0a0a0a;
+  display: inline-block;
+  font-size: 1.1em;
+  padding: 1%;
+  text-decoration: none;
+  margin-bottom: 1%;
+  width: 97%; 
+}
+
+textarea{
+  resize: none;
+  text-align: justify;
+  white-space: pre-line;
+  -moz-text-align-last: left;
+  text-align-last: left;
+}
+
+input{
+  text-align: center;
+}
+
+.label-inc{
+  border: 1px solid var(--primary);
+  padding: 1%;
+  border-radius: 10px 10px 10px 10px;
+  width: fit-content;
+  margin-bottom: 1%;
+}
+
+.label-rubro{
+  border: 1px solid var(--primary);
+  height: unset;
+  padding: 1%;
+  border-radius: 10px 10px 10px 10px;
+  width: auto;
+  margin-bottom: 1%;
+  width: 40%;
+}
+
+.multiline-mat-option.mat-option {
+  white-space: normal;
+  line-height: normal;
+  height: unset;
+  padding-top: 0.9em;
+  padding-bottom: 0.9em;
+} 
