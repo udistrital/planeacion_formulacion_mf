@@ -146,14 +146,17 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       // await this.verificarFechas();
     }
 
-    const unidadCookie = JSON.parse(this.verificarFormulario.getCookie("unidad")!);
-    const vigenciaCookie = JSON.parse(this.verificarFormulario.getCookie("vigencia")!);
-    const planCookie = JSON.parse(this.verificarFormulario.getCookie("plan")!);
+    // const unidadCookie = JSON.parse(this.verificarFormulario.getCookie("unidad")!);
+    // const vigenciaCookie = JSON.parse(this.verificarFormulario.getCookie("vigencia")!);
+    // const planCookie = JSON.parse(this.verificarFormulario.getCookie("plan")!);
+    const unidadCookie = this.verificarFormulario.getCookie("unidad");
+    const vigenciaCookie = this.verificarFormulario.getCookie("vigencia");
+    const planCookie = this.verificarFormulario.getCookie("plan");
     if (unidadCookie != undefined || vigenciaCookie != undefined || planCookie != undefined) {
       this.pendienteCheck = true;
-      this.onChangeU(unidadCookie);
-      this.onChangeV(vigenciaCookie);
-      this.onChangeP(planCookie);
+      this.onChangeU(JSON.parse(unidadCookie!));
+      this.onChangeV(JSON.parse(vigenciaCookie!));
+      this.onChangeP(JSON.parse(planCookie!));
     }
 
     // dependencia_id, vigencia_id, nombre, version
@@ -179,9 +182,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    const unidadCookie = JSON.parse(this.verificarFormulario.getCookie("unidad")!);
-    const vigenciaCookie = JSON.parse(this.verificarFormulario.getCookie("vigencia")!);
-    const planCookie = JSON.parse(this.verificarFormulario.getCookie("plan")!);
+    const unidadCookie = this.verificarFormulario.getCookie("unidad");
+    const vigenciaCookie = this.verificarFormulario.getCookie("vigencia");
+    const planCookie = this.verificarFormulario.getCookie("plan");
     if (unidadCookie != undefined || vigenciaCookie != undefined || planCookie != undefined) {
       this.verificarFormulario.deleteCookie("unidad");
       this.verificarFormulario.deleteCookie("vigencia");
