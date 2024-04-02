@@ -146,14 +146,16 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       // await this.verificarFechas();
     }
 
-    this.miObservableSubscription = this.verificarFormulario.formData$.subscribe(formData => {
-      if (formData.length !== 0) {
-        this.pendienteCheck = true;
-        this.onChangeU(formData[2]);
-        this.onChangeV(formData[1]);
-        this.onChangeP(formData[0])
-      }
-    });
+    const unidadCookie = JSON.parse(this.verificarFormulario.getCookie("unidad")!);
+    const vigenciaCookie = JSON.parse(this.verificarFormulario.getCookie("vigencia")!);
+    const planCookie = JSON.parse(this.verificarFormulario.getCookie("plan")!);
+    if (unidadCookie != undefined || vigenciaCookie != undefined || planCookie != undefined) {
+      this.pendienteCheck = true;
+      this.onChangeU(unidadCookie);
+      this.onChangeV(vigenciaCookie);
+      this.onChangeP(planCookie);
+    }
+
     // dependencia_id, vigencia_id, nombre, version
     this.activatedRoute.params.subscribe(async (prm) => {
       let dependencia_id = prm['dependencia_id'];
@@ -177,9 +179,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    if (this.verificarFormulario.formData$) {
-      this.verificarFormulario.cleanFormData();
-      this.miObservableSubscription.unsubscribe();
+    const unidadCookie = JSON.parse(this.verificarFormulario.getCookie("unidad")!);
+    const vigenciaCookie = JSON.parse(this.verificarFormulario.getCookie("vigencia")!);
+    const planCookie = JSON.parse(this.verificarFormulario.getCookie("plan")!);
+    if (unidadCookie != undefined || vigenciaCookie != undefined || planCookie != undefined) {
+      this.verificarFormulario.deleteCookie("unidad");
+      this.verificarFormulario.deleteCookie("vigencia");
+      this.verificarFormulario.deleteCookie("plan");
     }
   }
 
