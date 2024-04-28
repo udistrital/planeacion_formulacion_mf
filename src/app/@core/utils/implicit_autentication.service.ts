@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
-import { BehaviorSubject, of } from 'rxjs';
+import { BehaviorSubject } from 'rxjs';
+import { UserSubscriber } from '../models/usuario';
 
 @Injectable({
   providedIn: 'root',
@@ -11,7 +12,7 @@ export class ImplicitAutenticationService {
   timeActiveAlert: number = 4000;
   isLogin = false;
 
-  private userSubject = new BehaviorSubject({});
+  private userSubject = new BehaviorSubject({} as UserSubscriber);
   public user$ = this.userSubject.asObservable();
 
   private menuSubject = new BehaviorSubject({});
@@ -48,12 +49,10 @@ export class ImplicitAutenticationService {
   }
 
   public getDocument() {
-    const rolePromise = new Promise((resolve, reject) => {
-      this.user$.subscribe((data: any) => {
-        const { userService } = data;
+    return new Promise<string>((resolve) => {
+      this.user$.subscribe(({ userService}) => {
         resolve(userService.documento);
       });
     });
-    return rolePromise;
   }
 }

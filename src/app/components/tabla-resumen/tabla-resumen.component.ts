@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
-import { ResumenPlan } from 'src/app/@core/models/plan/resumen_plan';
+import { ResumenPlan } from 'src/app/@core/models/resumenPlan';
 import { RequestManager } from 'src/app/services/requestManager';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';

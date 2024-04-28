@@ -5,7 +5,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import Swal from 'sweetalert2';
 import { isNumeric } from 'rxjs/internal-compatibility';
 import { RequestManager } from 'src/app/services/requestManager';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../environments/environment';
 import { formatCurrency, getCurrencySymbol } from '@angular/common';
 import { rubros_aux } from './rubros';
 

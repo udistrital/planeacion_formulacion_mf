@@ -12,29 +12,7 @@ import { RequestManager } from 'src/app/services/requestManager';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
 import { ImplicitAutenticationService } from 'src/app/@core/utils/implicit_autentication.service';
-
-interface Subgrupo {
-  activo: string;
-  nombre: string;
-  descripcion: string;
-  id: string;
-  children?: Subgrupo[];
-}
-
-// Objeto fila
-
-interface Nodo {
-  expandable: boolean;
-  activo: string;
-  nombre: string;
-  descripcion: string;
-  id: string;
-  level: number;
-  icon?: string;
-  idx?: number;
-  padre_idx?: number | undefined;
-  hijos_idx?: (number | undefined)[];
-}
+import { Nodo, Subgrupo } from 'src/app/@core/models/arbol';
 
 const Checked: string = 'done';
 const Unchecked: string = 'compare_arrows';

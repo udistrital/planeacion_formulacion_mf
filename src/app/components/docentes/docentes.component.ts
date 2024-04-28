@@ -4,7 +4,7 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import Swal from 'sweetalert2';
 import { RequestManager } from 'src/app/services/requestManager';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../environments/environment';
 import { FormControl } from '@angular/forms';
 import { isNumeric } from 'rxjs/internal-compatibility';
 import { formatCurrency, getCurrencySymbol } from '@angular/common';

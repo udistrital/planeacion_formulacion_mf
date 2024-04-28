@@ -1,18 +1,20 @@
-import { Component, ViewChild, OnInit, OnDestroy } from '@angular/core';
+import { Component, OnDestroy, OnInit, ViewChild } from '@angular/core';
+import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
-import { FormBuilder, FormGroup, FormControl } from '@angular/forms';
-import { RequestManager } from 'src/app/services/requestManager';
-import { environment } from 'src/environments/environment';
 import { MatTableDataSource } from '@angular/material/table';
-import Swal from 'sweetalert2';
-import { ImplicitAutenticationService } from 'src/app/@core/utils/implicit_autentication.service';
-import { UserService } from 'src/app/services/userService';
 import { ActivatedRoute } from '@angular/router';
-import { VerificarFormulario } from 'src/app/services/verificarFormulario';
 import { Subscription } from 'rxjs';
-import { ResumenPlan } from 'src/app/@core/models/plan/resumen_plan';
-import { DataRequest } from 'src/app/@core/models/interfaces/DataRequest.interface';
+import { DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { Dependencia, DependenciaTipoDependencia } from 'src/app/@core/models/dependencia';
+import { ResumenPlan } from 'src/app/@core/models/resumenPlan';
+import { InfoTercero, TerceroFormulacion } from 'src/app/@core/models/tercero';
+import { ImplicitAutenticationService } from 'src/app/@core/utils/implicit_autentication.service';
+import { RequestManager } from 'src/app/services/requestManager';
+import { UserService } from 'src/app/services/userService';
+import { VerificarFormulario } from 'src/app/services/verificarFormulario';
+import { environment } from 'src/environments/environment';
+import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-formulacion',
@@ -24,8 +26,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   activedStep = 0;
   form!: FormGroup;
   planes!: any[];
-  unidades: any[] = [];
-  auxUnidades: any[] = [];
+  unidades: Dependencia[] = [];
+  auxUnidades: Dependencia[] = [];
   planesInteresArray: any[] = []
   vigencias!: any[];
   planSelected: boolean;
@@ -249,7 +251,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         this.request
           .post(environment.PLANES_CRUD, `periodo-seguimiento/buscar-unidad-planes/3`, periodo_seguimiento)
           .subscribe(
-            async (data: DataRequest) => {
+            async (data: DataRequestMID) => {
               if (data) {
                 if (data.Data.length != 0) {
                   let seguimientoFormulacion = data.Data[0];
@@ -299,61 +301,60 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   async validarUnidad() {
-    return await new Promise((resolve, reject) => {
-      let document: any = this.autenticationService.getDocument();
-      this.request
-        .get(
-          environment.TERCEROS_SERVICE,
-          `datos_identificacion/?query=Numero:` +
-          document.__zone_symbol__value
-        )
-        .subscribe((datosInfoTercero: any) => {
-          this.request
-            .get(
-              environment.PLANES_MID,
-              `formulacion/vinculacion_tercero/` +
-              datosInfoTercero[0].TerceroId.Id
-            )
-            .subscribe((vinculacion: any) => {
-              if (vinculacion['Data'] != '') {
-                this.request
-                  .get(
-                    environment.OIKOS_SERVICE,
-                    `dependencia_tipo_dependencia?query=DependenciaId:` +
-                    vinculacion['Data']['DependenciaId']
-                  )
-                  .subscribe((dataUnidad: any) => {
-                    if (dataUnidad) {
-                      let unidad = dataUnidad[0]['DependenciaId'];
-                      unidad['TipoDependencia'] =
-                        dataUnidad[0]['TipoDependenciaId']['Id'];
-                      for (let i = 0; i < dataUnidad.length; i++) {
-                        if (dataUnidad[i]['TipoDependenciaId']['Id'] === 2) {
-                          unidad['TipoDependencia'] =
-                            dataUnidad[i]['TipoDependenciaId']['Id'];
+    await new Promise((resolve, reject) => {
+      this.autenticationService.getDocument().then((documento) => {
+        this.request
+          .get(
+            environment.TERCEROS_SERVICE,
+            `datos_identificacion/?query=Numero:${documento}`
+          )
+          .subscribe((datosInfoTercero: InfoTercero[]) => {
+            this.request
+              .get(
+                environment.PLANEACION_FORMULACION_MID,
+                `formulacion/tercero/${datosInfoTercero[0].TerceroId.Id}`
+              )
+              .subscribe((vinculacion: DataRequestMID) => {
+                if (vinculacion.data != null) {
+                  const vinculaciones: TerceroFormulacion[] = vinculacion.data;
+                  for (let aux = 0; aux < vinculaciones.length; aux++) {
+                    this.request
+                      .get(
+                        environment.OIKOS_SERVICE,
+                        `dependencia_tipo_dependencia?query=DependenciaId:${vinculaciones[aux].DependenciaId}`
+                      )
+                      .subscribe((dataUnidad: DependenciaTipoDependencia[]) => {
+                        if (dataUnidad) {
+                          let unidad = dataUnidad[0].DependenciaId;
+                          unidad.TipoDependencia =
+                            dataUnidad[0].TipoDependenciaId.Id;
+                          for (let i = 0; i < dataUnidad.length; i++) {
+                            if (dataUnidad[i].TipoDependenciaId.Id === 2) {
+                              unidad.TipoDependencia =
+                                dataUnidad[i].TipoDependenciaId.Id;
+                            }
+                          }
+                          this.unidades.push(unidad);
+                          this.auxUnidades.push(unidad);
+                          this.moduloVisible = true;
                         }
-                      }
-                      this.unidades.push(unidad);
-                      this.auxUnidades.push(unidad);
-                      this.formSelect.get('selectUnidad')!.setValue(unidad);
-                      this.onChangeU(unidad);
-                      this.moduloVisible = true;
-                      resolve(unidad);
-                    }
+                      });
+                  }
+                  resolve(this.unidades);
+                } else {
+                  this.moduloVisible = false;
+                  Swal.fire({
+                    title: "Error en la operación",
+                    text: `No cuenta con los permisos requeridos para acceder a este módulo`,
+                    icon: "warning",
+                    showConfirmButton: false,
+                    timer: 4000,
                   });
-              } else {
-                this.moduloVisible = false;
-                Swal.fire({
-                  title: 'Error en la operación',
-                  text: `No cuenta con los permisos requeridos para acceder a este módulo`,
-                  icon: 'warning',
-                  showConfirmButton: false,
-                  timer: 4000,
-                });
-                reject();
-              }
-            });
-        });
+                  reject();
+                }
+              });
+          });
+      });
     });
   }
 
@@ -437,7 +438,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       "Id": this.unidad.Id,
       "Nombre": this.unidad.Nombre
     }
-    var periodo_seguimiento: any = {
+    var periodo_seguimiento = {
       unidades_interes: JSON.stringify([unidad_interes]),
       periodo_id: this.vigencia.Id.toString(),
       tipo_seguimiento_id: '6260e975ebe1e6498f7404ee'
@@ -445,7 +446,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     return await new Promise((resolve, reject) => {
       this.request
         .post(environment.PLANES_CRUD, `periodo-seguimiento/buscar-unidad-planes/3`, periodo_seguimiento)
-        .subscribe((data: DataRequest) => {
+        .subscribe((data: DataRequestMID) => {
           if (data && data.Data.length > 0) {
             data.Data.forEach((elemento: any) => {
               if (elemento.planes_interes) {
@@ -636,7 +637,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     }
   }
 
-  async onChangeU(unidad: any) {
+  async onChangeU(unidad: Dependencia) {
     if (unidad == undefined) {
       this.unidadSelected = false;
     } else {
