@@ -23,7 +23,7 @@ export class ImplicitAutenticationService {
     this.userSubject.next(JSON.parse(atob(user)));
   }
 
-  public getRole() {
+  public getRoles() {
     return new Promise<string[]>((resolve) => {
       this.user$.subscribe(({ user, userService }) => {
         const roleUser = typeof user.role !== "undefined" ? user.role : [];
@@ -37,7 +37,7 @@ export class ImplicitAutenticationService {
     });
   }
 
-  public getDocument() {
+  public getDocumento() {
     return new Promise<string>((resolve) => {
       this.user$.subscribe(({ userService }) => {
         resolve(userService.documento);

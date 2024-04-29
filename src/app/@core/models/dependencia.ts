@@ -10,7 +10,7 @@ export type Dependencia = {
   TelefonoDependencia: string;
   CorreoElectronico: string;
   DependenciaTipoDependencia: null | DependenciaTipoDependencia;
-  TipoDependencia?: number;
+  TipoDependencia?: number | TipoDependencia;
 };
 
 export type TipoDependencia = {

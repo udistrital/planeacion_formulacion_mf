@@ -9,7 +9,7 @@ import {
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
 import { DataRequestMID } from 'src/app/@core/models/dataRequest';
-import { ResumenPlan } from 'src/app/@core/models/resumenPlan';
+import { ResumenPlan } from 'src/app/@core/models/plan';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';

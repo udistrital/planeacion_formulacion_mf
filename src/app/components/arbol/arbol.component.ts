@@ -92,7 +92,7 @@ export class ArbolComponent implements OnInit {
     private autenticationService: ImplicitAutenticationService
 
   ) {
-    let roles: any = this.autenticationService.getRole();
+    let roles: any = this.autenticationService.getRoles();
     if (roles.__zone_symbol__value.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
       this.rol = 'JEFE_DEPENDENCIA'
     } else if (roles.__zone_symbol__value.find((x: any) => x == 'PLANEACION')) {
