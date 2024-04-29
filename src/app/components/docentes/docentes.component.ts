@@ -3,13 +3,14 @@ import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import Swal from 'sweetalert2';
-import { RequestManager } from 'src/app/services/requestManager';
 import { environment } from '../../../environments/environment';
 import { FormControl } from '@angular/forms';
 import { isNumeric } from 'rxjs/internal-compatibility';
 import { formatCurrency, getCurrencySymbol } from '@angular/common';
 import { rubros_aux } from '../recursos/rubros';
 import { FloatLabelType } from '@angular/material/form-field';
+import { RequestManager } from 'src/app/@core/services/requestManager';
+import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
 
 @Component({
   selector: 'app-docentes',
@@ -454,9 +455,9 @@ export class DocentesComponent implements OnInit {
 
     if (data.tipo != "" && data.categoria != "" && data.cantidad != 0 && data.semanas != 0 && data.horas != 0) {
       this.banderaCerrar = true
-      this.request.post(environment.PLANES_MID, "formulacion/calculos_docentes", data).subscribe((response: any) => {
+      this.request.post(environment.PLANEACION_FORMULACION_MID, `formulacion/calculos_docentes`, data).subscribe((response: DataRequestMID) => {
         if (response) {
-          let dataResponse = this.formatData(response.Data)
+          let dataResponse = this.formatData(response.data)
           this.limpiarPublicosyPrivados(dataResponse)
           const dataSource = this.getDataSource(tipo);
           Object.assign(dataSource?.[rowIndex], dataResponse);
@@ -475,27 +476,19 @@ export class DocentesComponent implements OnInit {
     }
   }
 
-  getData(): Promise<any> {
-    let message: any;
-    let resolveRef: any;
-    let rejectRef;
-
-    let dataPromise: Promise<any> = new Promise((resolve, reject) => {
-      resolveRef = resolve;
-      rejectRef = reject;
+  getData() {
+    return new Promise((resolve) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/61897518f6fc97091727c3c3`).subscribe((data: DataRequestMID) => {
+        if (data) {
+          this.data = data.data;
+          resolve(this.data)
+        }
+      })
     });
-    this.request.get(environment.PLANES_MID, `formulacion/get_all_identificacion/` + this.plan + `/61897518f6fc97091727c3c3`).subscribe((data: any) => {
-      if (data) {
-        let aux: object = data.Data;
-        this.data = aux;
-        resolveRef(message)
-      }
-    })
-    return dataPromise
   }
 
   loadPlan() {
-    this.request.get(environment.PLANES_CRUD, `plan/` + this.plan).subscribe((data: any) => {
+    this.request.get(environment.PLANES_CRUD, `plan/${this.plan}`).subscribe((data: DataRequest) => {
       if (data.Data != null) {
         this.Plan = data.Data;
         this.getEstado();
@@ -504,22 +497,26 @@ export class DocentesComponent implements OnInit {
   }
 
   getEstado() {
-    this.request.get(environment.PLANES_CRUD, `estado-plan/` + this.Plan.estado_plan_id).subscribe((data: any) => {
-      if (data) {
-        this.estadoPlan = data.Data.nombre;
-        this.displayedColumns = this.visualizarColumnas();
-        this.displayedHeaders = this.visualizarHeaders();
-      }
-    }),
-      (error: any) => {
-        Swal.fire({
-          title: 'Error en la operación',
-          icon: 'error',
-          text: `${JSON.stringify(error)}`,
-          showConfirmButton: false,
-          timer: 2500
-        })
-      }
+    this.request
+      .get(environment.PLANES_CRUD, `estado-plan/${this.Plan.estado_plan_id}`)
+      .subscribe(
+        (data: DataRequest) => {
+          if (data) {
+            this.estadoPlan = data.Data.nombre;
+            this.displayedColumns = this.visualizarColumnas();
+            this.displayedHeaders = this.visualizarHeaders();
+          }
+        },
+        (error: any) => {
+          Swal.fire({
+            title: "Error en la operación",
+            icon: "error",
+            text: `${JSON.stringify(error)}`,
+            showConfirmButton: false,
+            timer: 2500,
+          });
+        }
+      );
   }
 
   visualizarColumnas(): string[] {
@@ -1149,7 +1146,7 @@ export class DocentesComponent implements OnInit {
           "rubros_pos": dataRubrosPos
         }
         let aux = JSON.stringify(Object.assign({}, identificaciones));
-        this.request.put(environment.PLANES_MID, `formulacion/guardar_identificacion`, aux, this.plan + `/61897518f6fc97091727c3c3`).subscribe((data: any) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, aux, `${this.plan}/61897518f6fc97091727c3c3`).subscribe((data: DataRequestMID) => {
           if (data) {
             Swal.fire({
               title: 'Guardado exitoso',
@@ -1311,69 +1308,75 @@ export class DocentesComponent implements OnInit {
   }
 }
 
-var dataRubros: any[] = [
+type Rubro = {
+  categoria: string;
+  rubro: string;
+  codigo: string;
+};
+var dataRubros: Rubro[] = [
   {
-    "categoria": "Prima de Servicios",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Prima de Servicios",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Prima de navidad",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Prima de navidad",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Prima de vacaciones",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Prima de vacaciones",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Salario básico",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Salario básico",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Intereses cesantías",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Intereses cesantías",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Aporte cesantías público",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Aporte cesantías público",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Aporte cesantías privado",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Aporte cesantías privado",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Aporte salud",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Aporte salud",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Fondo pensiones público",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Fondo pensiones público",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Fondo pensiones privado",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Fondo pensiones privado",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Aporte ARL",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Aporte ARL",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Aporte CCF",
-    "rubro": "",
-    "codigo": ""
+    categoria: "Aporte CCF",
+    rubro: "",
+    codigo: "",
   },
   {
-    "categoria": "Aporte ICBF",
-    "rubro": "",
-    "codigo": ""
-  }];
+    categoria: "Aporte ICBF",
+    rubro: "",
+    codigo: "",
+  },
+];

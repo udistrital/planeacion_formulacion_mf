@@ -8,8 +8,9 @@ import {
 } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
+import { DataRequestMID } from 'src/app/@core/models/dataRequest';
 import { ResumenPlan } from 'src/app/@core/models/resumenPlan';
-import { RequestManager } from 'src/app/services/requestManager';
+import { RequestManager } from 'src/app/@core/services/requestManager';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
 
@@ -61,7 +62,7 @@ export class TablaResumenComponent implements OnInit, AfterViewInit {
   }
 
   ngAfterViewInit(): void {
-    this.inputsFiltros = document.querySelectorAll('th.mat-header-cell input');
+    this.inputsFiltros = document.querySelectorAll('th input');
   }
 
   aplicarFiltro(event: Event): void {
@@ -79,7 +80,7 @@ export class TablaResumenComponent implements OnInit, AfterViewInit {
     this.informacionTabla.filter = filtro.trim().toLowerCase();
   }
 
-  async cargarPlanes(): Promise<void> {
+  async cargarPlanes() {
     Swal.fire({
       title: 'Cargando planes en formulación',
       timerProgressBar: true,
@@ -88,13 +89,12 @@ export class TablaResumenComponent implements OnInit, AfterViewInit {
         Swal.showLoading();
       },
     });
-    await new Promise((resolve, reject) => {
+    return await new Promise<ResumenPlan[]>((resolve, reject) => {
       this.request
-        .get(environment.PLANES_MID, `formulacion/planes_formulacion`)
+        .get(environment.PLANEACION_FORMULACION_MID, `formulacion/planes_formulacion`)
         .subscribe(
-          (data) => {
-            this.planes = data.Data;
-            if (this.planes.length != 0) {
+          (data : DataRequestMID) => {
+            if ((data.data as ResumenPlan[]).length != 0) {
               Swal.close();
             } else {
               Swal.close();
@@ -106,7 +106,7 @@ export class TablaResumenComponent implements OnInit, AfterViewInit {
                 timer: 2500,
               });
             }
-            resolve(this.planes);
+            resolve(data.data as ResumenPlan[]);
           },
           (error) => {
             Swal.close();
@@ -122,6 +122,8 @@ export class TablaResumenComponent implements OnInit, AfterViewInit {
             reject();
           }
         );
+    }).then((planes)=>{
+      this.planes = planes;
     });
   }
 

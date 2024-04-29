@@ -1,6 +1,6 @@
 export type UserSubscriber = {
   user:        User;
-  userService: UserService;
+  userService: UserServiceInfo;
 }
 
 export type User = {
@@ -18,7 +18,7 @@ export type User = {
   email:               string;
 }
 
-export type UserService = {
+export type UserServiceInfo = {
   role:                string[];
   documento:           string;
   documento_compuesto: string;

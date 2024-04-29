@@ -1,4 +1,4 @@
-export interface ResumenPlan {
+export type ResumenPlan = {
   id?: string;
   dependencia_id: string;
   dependencia_nombre?: string;

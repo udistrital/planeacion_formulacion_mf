@@ -4,15 +4,13 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
-import { Subscription } from 'rxjs';
-import { DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
 import { Dependencia, DependenciaTipoDependencia } from 'src/app/@core/models/dependencia';
 import { ResumenPlan } from 'src/app/@core/models/resumenPlan';
 import { InfoTercero, TerceroFormulacion } from 'src/app/@core/models/tercero';
+import { RequestManager } from 'src/app/@core/services/requestManager';
+import { VerificarFormulario } from 'src/app/@core/services/verificarFormulario';
 import { ImplicitAutenticationService } from 'src/app/@core/utils/implicit_autentication.service';
-import { RequestManager } from 'src/app/services/requestManager';
-import { UserService } from 'src/app/services/userService';
-import { VerificarFormulario } from 'src/app/services/verificarFormulario';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
 
@@ -82,7 +80,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   formArmonizacion: FormGroup;
   formSelect: FormGroup;
-  private miObservableSubscription!: Subscription;
   pendienteCheck: boolean;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
@@ -92,7 +89,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     private formBuilder: FormBuilder,
     private request: RequestManager,
     private autenticationService: ImplicitAutenticationService,
-    private userService: UserService,
     private activatedRoute: ActivatedRoute,
     private verificarFormulario: VerificarFormulario
   ) {
@@ -128,29 +124,22 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   dataSource!: MatTableDataSource<any>;
 
   async ngOnInit() {
-    let roles: any = this.autenticationService.getRole();
-    if (roles.__zone_symbol__value.find((x: any) => x == 'PLANEACION')) {
-      this.rol = 'PLANEACION';
+    await this.autenticationService.getRole().then((roles)=>{
+      if (roles.find((x) => x == 'PLANEACION')) {
+        this.rol = 'PLANEACION';
+      } else if (roles.find((x) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
+        this.rol = 'JEFE_DEPENDENCIA';
+      } else if (roles.find((x) => x == 'JEFE_UNIDAD_PLANEACION')) {
+        this.rol = "JEFE_UNIDAD_PLANEACION";
+      }
+    });
+
+    if(this.rol = 'PLANEACION'){
       await this.loadUnidades();
-    } else if (
-      roles.__zone_symbol__value.find(
-        (x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA'
-      )
-    ) {
-      this.rol = 'JEFE_DEPENDENCIA';
+    } else if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'JEFE_UNIDAD_PLANEACION'){
       await this.validarUnidad()
       //await this.verificarFechas();
-    } else if (
-      roles.__zone_symbol__value.find((x: any) => x == 'JEFE_UNIDAD_PLANEACION')
-    ) {
-      this.rol = 'JEFE_UNIDAD_PLANEACION';
-      await this.validarUnidad()
-      // await this.verificarFechas();
     }
-
-    // const unidadCookie = JSON.parse(this.verificarFormulario.getCookie("unidad")!);
-    // const vigenciaCookie = JSON.parse(this.verificarFormulario.getCookie("vigencia")!);
-    // const planCookie = JSON.parse(this.verificarFormulario.getCookie("plan")!);
     const unidadCookie = this.verificarFormulario.getCookie("unidad");
     const vigenciaCookie = this.verificarFormulario.getCookie("vigencia");
     const planCookie = this.verificarFormulario.getCookie("plan");
@@ -247,13 +236,12 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         periodo_id: this.vigencia.Id.toString(),
         tipo_seguimiento_id: '6260e975ebe1e6498f7404ee'
       }
-      return await new Promise((resolve, reject) => {
+      await new Promise((resolve, reject) => {
         this.request
           .post(environment.PLANES_CRUD, `periodo-seguimiento/buscar-unidad-planes/3`, periodo_seguimiento)
           .subscribe(
-            async (data: DataRequestMID) => {
-              if (data) {
-                if (data.Data.length != 0) {
+            async (data: DataRequest) => {
+              if (data?.Data.length != 0) {
                   let seguimientoFormulacion = data.Data[0];
                   let auxFecha = new Date();
                   let auxFechaCol = auxFecha.toLocaleString('en-US', {
@@ -280,7 +268,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                       timer: 10000,
                     });
                     reject();
-                  }
                 }
               }
             }, (error) => {
@@ -311,8 +298,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           .subscribe((datosInfoTercero: InfoTercero[]) => {
             this.request
               .get(
-                environment.PLANEACION_FORMULACION_MID,
-                `formulacion/tercero/${datosInfoTercero[0].TerceroId.Id}`
+                environment.PLANES_MID,
+                `formulacion/vinculacion_tercero/${datosInfoTercero[0].TerceroId.Id}`
               )
               .subscribe((vinculacion: DataRequestMID) => {
                 if (vinculacion.data != null) {
@@ -361,17 +348,17 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   async loadUnidades() {
     return new Promise((resolve, reject) => {
       this.request
-        .get(environment.PLANES_MID, `formulacion/get_unidades`)
+        .get(environment.PLANEACION_FORMULACION_MID, `formulacion/unidades`)
         .subscribe(
-          (data: any) => {
+          (data: DataRequestMID) => {
             if (data) {
-              this.unidades = data.Data;
-              this.auxUnidades = data.Data;
+              this.unidades = data.data;
+              this.auxUnidades = data.data;
               this.moduloVisible = true;
               resolve(this.unidades);
             }
           },
-          (error) => {
+          (error: any) => {
             Swal.fire({
               title: 'Error en la operación',
               text: `No se encontraron datos registrados ${JSON.stringify(
@@ -446,7 +433,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     return await new Promise((resolve, reject) => {
       this.request
         .post(environment.PLANES_CRUD, `periodo-seguimiento/buscar-unidad-planes/3`, periodo_seguimiento)
-        .subscribe((data: DataRequestMID) => {
+        .subscribe((data: DataRequest) => {
           if (data && data.Data.length > 0) {
             data.Data.forEach((elemento: any) => {
               if (elemento.planes_interes) {
@@ -530,11 +517,10 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           armoPI: this.dataArmonizacionPI.toString(),
           entrada: formValue
         }
-        this.request.put(environment.PLANES_MID, `formulacion/guardar_actividad`, actividad, this.plan._id).subscribe((data: any) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/actividad`, actividad, this.plan._id).subscribe((data: DataRequestMID) => {
           if (data) {
             Swal.fire({
               title: 'Actividad agregada',
-              //text: `Acción generada: ${JSON.stringify(this.form.value)}`,
               text: 'La actividad se ha registrado satisfactoriamente',
               icon: 'success'
             }).then((result) => {
@@ -584,7 +570,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           armoPI: aux2,
           entrada: formValue
         }
-        this.request.put(environment.PLANES_MID, `formulacion/actualizar_actividad`, actividad, this.plan._id + `/` + this.rowActividad).subscribe((data: any) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/actividad`, actividad, `${this.plan._id}/${this.rowActividad}`).subscribe((data: DataRequestMID) => {
           if (data) {
             Swal.fire({
               title: 'Información de actividad actualizada',
@@ -651,7 +637,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.iconEstado = '';
       this.versionPlan = '';
       if (this.vigenciaSelected && this.planSelected) {
-        await this.busquedaPlanes(this.planAux, false);
+        await this.busquedaPlanes(this.planAux);
       }
     }
   }
@@ -682,7 +668,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.planAsignado = false;
       this.dataT = false;
       if (this.unidadSelected && this.planSelected) {
-        await this.busquedaPlanes(this.planAux, false);
+        await this.busquedaPlanes(this.planAux);
       }
     }
   }
@@ -835,12 +821,12 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     }
   }
 
-  getVersiones(planB: any, planRecienCreado: boolean = false) {
-    let aux = planB.nombre.replace(/ /g, "%20");
-    this.request.get(environment.PLANES_MID, `formulacion/get_plan_versiones/${this.unidad.Id}/${this.vigencia.Id}/${aux}`).subscribe(
-      (data: any) => {
+  getVersiones(planB: any, planRecienCreado = false) {
+    let auxNombre = planB.nombre.replace(/ /g, "%20");
+    this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/plan/versiones/${this.unidad.Id}/${this.vigencia.Id}/${auxNombre}`).subscribe(
+      (data: DataRequestMID) => {
         if (data) {
-          this.versiones = data;
+          this.versiones = data.data;
           this.versiones.forEach((_, i) => {
             this.versiones[i]['numero'] = (i + 1).toString();
           });
@@ -870,15 +856,14 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     )
   }
 
-  async busquedaPlanes(planB: any, bandera: boolean) {
+  async busquedaPlanes(planB: any, bandera = false) {
     try {
       // Antes de cargar algún plan, hago la búsqueda del formato si tiene datos y la bandera "banderaEstadoDatos" se vuelve true o false.
       await this.cargaFormato(planB, bandera);
       //validación con bandera para el estado de los datos de los planes.
-      if (this.banderaEstadoDatos === true) {
-        this.request.get(environment.PLANES_CRUD, `plan?query=dependencia_id:` + this.unidad.Id + `,vigencia:` +
-          this.vigencia.Id + `,formato:false,nombre:` + planB.nombre).subscribe(
-            (data: any) => {
+      if (this.banderaEstadoDatos) {
+        this.request.get(environment.PLANES_CRUD, `plan?query=dependencia_id:${this.unidad.Id},vigencia:${this.vigencia.Id},formato:false,nombre:${planB.nombre}`).subscribe(
+            (data: DataRequest) => {
               if (data.Data.length > 0) {
                 this.getVersiones(planB);
               } else if (data.Data.length == 0) {
@@ -939,19 +924,19 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     } else if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'JEFE_PLANEACION') {
       this.iconEditar = 'edit'
     }
-    this.request.get(environment.PLANES_MID, `formulacion/get_all_actividades/` + this.plan._id + `?order=asc&sortby=index`).subscribe((data: any) => {
-      if (data.Data.data_source != null) {
-        this.dataSource = new MatTableDataSource(data.Data.data_source);
+    this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/actividad/${this.plan._id}?order=asc&sortby=index`).subscribe((data: DataRequestMID) => {
+      if (data.data.data_source != null) {
+        this.dataSource = new MatTableDataSource(data.data.data_source);
         this.defaultFilterPredicate = this.dataSource.filterPredicate;
         this.cambiarValor("activo", true, "Activo", this.dataSource.data)
         this.cambiarValor("activo", false, "Inactivo", this.dataSource.data)
-        this.displayedColumns = data.Data.displayed_columns;
+        this.displayedColumns = data.data.displayed_columns;
         this.columnsToDisplay = this.displayedColumns.slice();
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;
         this.dataT = true;
         this.filterActive()
-      } else if (!data.data_source && !data.displayed_columns) {
+      } else if (!data.data.data_source && !data.data.displayed_columns) {
         this.dataT = false;
         Swal.fire({
           title: 'Atención en la operación',
@@ -981,7 +966,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     })
   }
 
-  cargaFormato(plan: any, bandera: boolean): Promise<void> {
+  cargaFormato(plan: any, bandera = false) {
     Swal.fire({
       title: 'Cargando formato',
       timerProgressBar: true,
@@ -996,7 +981,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.banderaEstadoDatos = true;
     } else {
       return new Promise((resolve, reject) => {
-        this.request.get(environment.PLANES_MID, `formato/` + plan._id).subscribe((data: any) => {
+        this.request.get(environment.PLANES_MID, `formato/${plan._id}`).subscribe((data: any) => {
           if (Array.isArray(data) && data[0] === null && Array.isArray(data[1]) &&
             data[1].length > 0 && Object.keys(data[1][0]).length === 0) {
             this.banderaEstadoDatos = false;
@@ -1025,7 +1010,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     return Promise.reject();
   }
 
-  async editar(fila: any): Promise<void> {
+  async editar(fila: any) {
     if (fila.activo == 'Inactivo') {
       Swal.fire({
         title: 'Actividad inactiva',
@@ -1054,17 +1039,17 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           Swal.showLoading();
         },
       })
-      this.request.get(environment.PLANES_MID, `formulacion/get_plan/` + this.plan._id + `/` + fila.index).subscribe((data: any) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/plan/${this.plan._id}/${fila.index}`).subscribe((data: DataRequestMID) => {
         if (data) {
           Swal.close();
           this.onChangePD(this.planesDesarrollo[0]);
           this.onChangePI(this.planesIndicativos[0]);
           this.estado = this.plan.estado_plan_id;
-          this.steps = data.Data[0]
-          this.json = data.Data[1][0]
+          this.steps = data.data[0]
+          this.json = data.data[1][0]
           this.form = this.formBuilder.group(this.json);
 
-          let auxAmonizacion = data.Data[2][0]
+          let auxAmonizacion = data.data[2][0]
           let strArmonizacion = auxAmonizacion.armo
           let len = (strArmonizacion.split(",").length)
           this.dataArmonizacionPED = strArmonizacion.split(",", len).filter(((item: any) => item != ""))
@@ -1118,7 +1103,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       cancelButtonText: `No`,
     }).then((result) => {
       if (result.isConfirmed) {
-        this.request.put(environment.PLANES_MID, `formulacion/delete_actividad`, `null`, this.plan._id + `/` + fila.index).subscribe((data: any) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/actividad`, `null`, `${this.plan._id}/${fila.index}/desactivar`).subscribe((data: DataRequestMID) => {
           if (data) {
             Swal.fire({
               title: 'Cambio realizado',
@@ -1157,7 +1142,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     if (this.tipoPlanIndicativo === undefined && this.idPlanIndicativo === undefined) {
       this.cargarPlanesIndicativos();
     }
-    this.cargaFormato(this.plan, false);
+    this.cargaFormato(this.plan);
     this.addActividad = true;
     this.banderaEdit = false;
     this.visualizeObs();
@@ -1331,9 +1316,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       "dependencia_id": String(this.unidad.Id),
       "vigencia": String(this.vigencia.Id)
     }
-    this.request.post(environment.PLANES_MID, `formulacion/clonar_formato/` + this.plan._id, parametros).subscribe((data: any) => {
+    this.request.post(environment.PLANEACION_FORMULACION_MID, `formulacion/formato/${this.plan._id}/clonar`, parametros).subscribe((data: DataRequestMID) => {
       if (data) {
-        this.plan = data.Data;
+        this.plan = data.data;
         Swal.fire({
           title: 'Formulación nuevo plan',
           text: `Plan creado satisfactoriamente`,
@@ -1341,10 +1326,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           showConfirmButton: false,
           timer: 4000
         })
-        // this.clonar = false;
-        // this.planAsignado = true;
-        // //CARGA TABLA
-        // this.loadData();
         this.getVersiones(this.plan, true);
 
       }
@@ -1448,9 +1429,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           html: this.ponderacionActividades
         })
       } else {
-        this.request.get(environment.PLANES_MID, `formulacion/verificar_identificaciones/` + this.plan._id).subscribe((data: any) => {
-          if (data) {
-            if (data.Data == true) {
+        this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/verificacion/${this.plan._id}`).subscribe((data: DataRequestMID) => {
+          if (data?.data) {
               Swal.fire({
                 title: 'Culminar Plan',
                 text: `¿Está seguro de enviar este Plan Culminado?`,
@@ -1468,7 +1448,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                         icon: 'success',
                       }).then((result) => {
                         if (result.value) {
-                          this.busquedaPlanes(data.Data, false);
+                          this.busquedaPlanes(data.Data);
                           this.loadData();
                           this.addActividad = false;
                         }
@@ -1500,7 +1480,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                 showConfirmButton: false,
                 timer: 2500
               })
-            }
           }
         })
 
@@ -1518,17 +1497,17 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       resolveRef = resolve;
       rejectRef = reject;
     });
-    this.request.get(environment.PLANES_MID, `formulacion/ponderacion_actividades/` + this.plan._id).subscribe((data: any) => {
+    this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/actividad/ponderacion/${this.plan._id}`).subscribe((data: DataRequestMID) => {
       if (data) {
-        interface Data { [key: string]: any; }
-        let aux: Data = data.Data
+        type Data = { [key: string]: any; };
+        let aux: Data = data.data
         let keys: string[];
 
         keys = Object.keys(aux)
         for (let key of keys) {
           message = message + key + ' : ' + aux[key] + "<br/>"
         }
-        if (parseInt(data.Data.Total) === 100) {
+        if (parseInt(data.data.Total) === 100) {
           this.ponderacionCompleta = true
         } else {
           this.ponderacionCompleta = false
@@ -1572,7 +1551,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               icon: 'success',
             }).then((result) => {
               if (result.value) {
-                this.busquedaPlanes(data.Data, false);
+                this.busquedaPlanes(data.Data);
                 this.loadData();
                 this.addActividad = false;
               }
@@ -1622,7 +1601,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               icon: 'success',
             }).then((result) => {
               if (result.value) {
-                this.busquedaPlanes(data.Data, false);
+                this.busquedaPlanes(data.Data);
                 this.loadData();
                 this.addActividad = false;
               }
@@ -1666,7 +1645,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               icon: 'success',
             }).then((result) => {
               if (result.value) {
-                this.busquedaPlanes(data.Data, false);
+                this.busquedaPlanes(data.Data);
                 this.loadData();
                 this.addActividad = false;
               }
@@ -1703,9 +1682,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
-        this.request.post(environment.PLANES_MID, `formulacion/versionar_plan/` + this.plan._id, this.plan).subscribe((data: any) => {
+        this.request.post(environment.PLANEACION_FORMULACION_MID, `formulacion/plan/${this.plan._id}/versionar`, this.plan).subscribe((data: DataRequestMID) => {
           if (data) {
-            this.getVersiones(data.Data);
+            this.getVersiones(data.data);
             Swal.fire({
               title: 'Nueva Versión',
               text: 'Nueva versión del plan creada, ya puede realizar los ajustes al plan.',
@@ -1761,7 +1740,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               icon: 'success',
             }).then((result) => {
               if (result.value) {
-                this.busquedaPlanes(data.Data, false);
+                this.busquedaPlanes(data.Data);
                 this.loadData();
                 this.addActividad = false;
               }
@@ -1795,59 +1774,96 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
 
   avalar() {
-    Swal.fire({
-      title: 'Pre Aval',
+    Swal.fire<{ isConfirmed: boolean; dismiss: number }>({
+      title: "Aval",
       text: `¿Desea darle Aval a este plan?`,
-      icon: 'warning',
+      icon: "warning",
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
-      showCancelButton: true
-    }).then((result) => {
-      if (result.isConfirmed) {
-        this.plan.estado_plan_id = "6153355601c7a2365b2fb2a1";
-        this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id).subscribe((data: any) => {
-          if (data) {
-            Swal.fire({
-              title: 'Plan Avalado',
-              icon: 'success',
-            }).then((result) => {
-              if (result.value) {
-                this.busquedaPlanes(data.Data, false);
-                this.loadData();
-                this.addActividad = false;
-                let aux = {}
-                this.request.post(environment.PLANES_MID, `seguimiento/crear_reportes/` + this.plan._id + `/61f236f525e40c582a0840d0`, this.plan).subscribe((data: any) => {
-                  if (!data) {
+      showCancelButton: true,
+    }).then(
+      // @ts-ignore
+      (result) => {
+        if (result.isConfirmed) {
+          this.mostrarMensajeCarga();
+          return new Promise((resolve, reject) => {
+            this.request
+              .post(
+                environment.PLANES_MID,
+                `seguimiento/avalar/${this.plan._id}`,
+                {}
+              )
+              .subscribe(
+                (data: any) => {
+                  Swal.close();
+                  if (data.Success == true) {
                     Swal.fire({
-                      title: 'Error en la operación',
-                      icon: 'error',
+                      title: "Plan Avalado",
+                      icon: "success",
+                      showConfirmButton: false,
+                      timer: 2500,
+                    });
+                    this.plan.estado_plan_id = "6153355601c7a2365b2fb2a1";
+                    this.busquedaPlanes(this.plan);
+                    this.loadData();
+                    this.addActividad = false;
+                    resolve(data);
+                  } else {
+                    Swal.fire({
+                      title: "Error en la operación",
+                      icon: "error",
                       text: `Error creando reportes de seguimiento`,
                       showConfirmButton: false,
-                      timer: 2500
-                    })
+                      timer: 2500,
+                    });
+                    reject();
                   }
-                })
-              }
-            })
-          }
-        })
-      } else if (result.dismiss === Swal.DismissReason.cancel) {
+                },
+                (error) => {
+                  Swal.close();
+                  const mensaje = error.error.Data
+                    ? error.error.Data
+                    : error.message;
+                  Swal.fire({
+                    title: "Error en la operación",
+                    text: `${mensaje}, por favor diríjase al módulo de administración y diligencie las fechas correspondientes al periodo de seguimiento para la vigencia requerida.`,
+                    icon: "warning",
+                    showConfirmButton: false,
+                    timer: 4000,
+                  });
+                  reject();
+                }
+              );
+          });
+        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          Swal.fire({
+            title: "Envio de Aval Cancelado",
+            icon: "error",
+            showConfirmButton: false,
+            timer: 2500,
+          });
+        }
+      },
+      (error) => {
         Swal.fire({
-          title: 'Envio de Aval Cancelado',
-          icon: 'error',
+          title: "Error en la operación",
+          icon: "error",
+          text: JSON.stringify(error),
           showConfirmButton: false,
-          timer: 2500
-        })
+          timer: 2500,
+        });
       }
-    }, (error) => {
-      Swal.fire({
-        title: 'Error en la operación',
-        icon: 'error',
-        text: JSON.stringify(error),
-        showConfirmButton: false,
-        timer: 2500
-      })
-    })
+    );
+  }
+  mostrarMensajeCarga(): void {
+    Swal.fire({
+      title: 'Procesando petición...',
+      allowEscapeKey: false,
+      allowOutsideClick: false,
+      didOpen: () => {
+        Swal.showLoading();
+      }
+    });
   }
   /**
    * Obtiene el elemento filtrado por los valores dados y actualiza su campo respectivo

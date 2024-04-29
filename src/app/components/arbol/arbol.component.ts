@@ -8,11 +8,12 @@ import {
   MatTreeFlatDataSource,
   MatTreeFlattener
 } from '@angular/material/tree';
-import { RequestManager } from 'src/app/services/requestManager';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
 import { ImplicitAutenticationService } from 'src/app/@core/utils/implicit_autentication.service';
 import { Nodo, Subgrupo } from 'src/app/@core/models/arbol';
+import { RequestManager } from 'src/app/@core/services/requestManager';
+import { DataRequestMID } from 'src/app/@core/models/dataRequest';
 
 const Checked: string = 'done';
 const Unchecked: string = 'compare_arrows';
@@ -131,11 +132,11 @@ export class ArbolComponent implements OnInit {
         Swal.showLoading();
       },
     })
-    this.request.get(environment.PLANES_MID, `arbol/` + this.idPlan).subscribe((data: any) => {
+    this.request.get(environment.PLANEACION_ARBOL_MID, `arbol/${this.idPlan}`).subscribe((data: DataRequestMID) => {
       Swal.close();
-      if (data.Data !== null) {
+      if (data.data !== null) {
         this.mostrar = true;
-        this.dataSource.data = data.Data;
+        this.dataSource.data = data.data;
         if (this.armonizacionPED || this.armonizacionPI) {
           this.linksArbol()
           this.expandNodes()
@@ -145,6 +146,7 @@ export class ArbolComponent implements OnInit {
       }
     }, (error) => {
       this.dataSource.data = [];
+      console.error(error);
       Swal.fire({
         title: 'Error en la operación',
         text: 'No se encontraron datos registrados',
