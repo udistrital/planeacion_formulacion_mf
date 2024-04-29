@@ -421,11 +421,11 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   async loadPlanesPeriodoSeguimiento() {
-    var unidad_interes = {
+    const unidad_interes = {
       "Id": this.unidad.Id,
       "Nombre": this.unidad.Nombre
     }
-    var periodo_seguimiento = {
+    const periodo_seguimiento = {
       unidades_interes: JSON.stringify([unidad_interes]),
       periodo_id: this.vigencia.Id.toString(),
       tipo_seguimiento_id: '6260e975ebe1e6498f7404ee'
@@ -434,28 +434,31 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.request
         .post(environment.PLANES_CRUD, `periodo-seguimiento/buscar-unidad-planes/3`, periodo_seguimiento)
         .subscribe((data: DataRequest) => {
-          if (data && data.Data.length > 0) {
+          if (data?.Data.length != 0) {
             data.Data.forEach((elemento: any) => {
               if (elemento.planes_interes) {
-                if (typeof elemento.planes_interes === 'string') {
+                if (typeof elemento.planes_interes === "string") {
                   try {
                     var planesInteresArray = JSON.parse(
                       elemento.planes_interes
                     );
-                    this.planesInteresArray = [...this.planesInteresArray, ...planesInteresArray];
+                    this.planesInteresArray = [
+                      ...this.planesInteresArray,
+                      ...planesInteresArray,
+                    ];
                     this.planes = [...this.planes, ...planesInteresArray];
                     Swal.close();
                     resolve(this.planes);
                   } catch (error) {
                     console.error(
-                      'Error al analizar JSON en planes_interes:',
+                      "Error al analizar JSON en planes_interes:",
                       error
                     );
                     reject(error);
                   }
                 } else {
                   console.error(
-                    'El elemento no tiene una cadena JSON en planes_interes:',
+                    "El elemento no tiene una cadena JSON en planes_interes:",
                     elemento
                   );
                   reject();
@@ -692,7 +695,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.isChecked = true;
       this.planEnArray = this.planesInteresArray.some(item => item._id === plan._id);
       await this.verificarFechas(plan);
-      this.busquedaPlanes(plan, this.planEnArray);
+      await this.busquedaPlanes(plan, this.planEnArray);
     }
   }
 
@@ -940,7 +943,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         this.dataT = false;
         Swal.fire({
           title: 'Atención en la operación',
-          text: `No hay actividades registradas para el plan \n por favor agrege actividad`,
+          text: `No hay actividades registradas para el plan \n por favor agregue actividades`,
           icon: 'warning',
           showConfirmButton: false,
           timer: 3500
@@ -979,12 +982,14 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     })
     if (bandera) {
       this.banderaEstadoDatos = true;
+      Swal.close();
     } else {
       return new Promise((resolve, reject) => {
         this.request.get(environment.PLANES_MID, `formato/${plan._id}`).subscribe((data: any) => {
           if (Array.isArray(data) && data[0] === null && Array.isArray(data[1]) &&
             data[1].length > 0 && Object.keys(data[1][0]).length === 0) {
             this.banderaEstadoDatos = false;
+            Swal.close();
             reject();
           } else {
             this.banderaEstadoDatos = true;//bandera validacion de la data
