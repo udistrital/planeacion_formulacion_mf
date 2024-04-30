@@ -1,6 +1,6 @@
 import { Injectable } from '@angular/core'
 import { environment } from 'src/environments/environment';
-import * as CryptoJS from 'crypto-js'
+import { AES, enc } from 'crypto-js'
 
 @Injectable({
   providedIn: 'root'
@@ -26,7 +26,7 @@ export class VerificarFormulario {
   }
 
   desencriptar(textoEncriptado: string, clave: string): string {
-    const bytes = CryptoJS.AES.decrypt(textoEncriptado, clave);
-    return bytes.toString(CryptoJS.enc.Utf8);
+    const bytes = AES.decrypt(textoEncriptado, clave);
+    return bytes.toString(enc.Utf8);
   }
 }

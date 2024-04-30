@@ -4,8 +4,8 @@ import { BrowserModule } from '@angular/platform-browser';
 import { AppRoutingModule } from './app-routing.module';
 import { AppComponent } from './app.component';
 
-import { FormulacionComponent } from './components/formulacion/formulacion.component';
-import { TablaResumenComponent } from './components/formulacion/tabla-resumen/tabla-resumen.component';
+import { FormulacionComponent } from './pages/formulacion/formulacion.component';
+import { TablaResumenComponent } from './components/tabla-resumen/tabla-resumen.component';
 import { ArbolComponent } from './components/arbol/arbol.component';
 
 import { MatTableModule } from '@angular/material/table'
@@ -27,9 +27,9 @@ import { MatDialogModule } from '@angular/material/dialog';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
 
-import { DocentesComponent } from './components/formulacion/docentes/docentes.component';
-import { RecursosComponent } from './components/formulacion/recursos/recursos.component';
-import { ContratistasComponent } from './components/formulacion/contratistas/contratistas.component';
+import { DocentesComponent } from './components/docentes/docentes.component';
+import { RecursosComponent } from './components/recursos/recursos.component';
+import { ContratistasComponent } from './components/contratistas/contratistas.component';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
 

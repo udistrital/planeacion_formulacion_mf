@@ -4,10 +4,11 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import Swal from 'sweetalert2';
 import { isNumeric } from 'rxjs/internal-compatibility';
-import { RequestManager } from 'src/app/services/requestManager';
-import { environment } from '../../../../environments/environment';
+import { environment } from '../../../environments/environment';
 import { formatCurrency, getCurrencySymbol } from '@angular/common';
 import { rubros_aux } from './rubros';
+import { RequestManager } from 'src/app/@core/services/requestManager';
+import { DataRequestMID } from 'src/app/@core/models/dataRequest';
 
 @Component({
   selector: 'app-recursos',
@@ -171,9 +172,9 @@ export class RecursosComponent implements OnInit {
 
   loadTabla() {
     if (this.dataTabla) {
-      this.request.get(environment.PLANES_MID, `formulacion/get_all_identificacion/` + this.plan + `/617b6630f6fc97b776279afa`).subscribe((dataG: any) => {
-        if (dataG.Data != null) {
-          this.dataSource.data = dataG.Data
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/617b6630f6fc97b776279afa`).subscribe((dataG: DataRequestMID) => {
+        if (dataG.data != null) {
+          this.dataSource.data = dataG.data
         }
       })
     }
@@ -318,7 +319,7 @@ export class RecursosComponent implements OnInit {
         obj["index"] = num.toString();
       }
       let dataS = JSON.stringify(Object.assign({}, data))
-      this.request.put(environment.PLANES_MID, `formulacion/guardar_identificacion`, dataS, this.plan + `/617b6630f6fc97b776279afa`).subscribe((data: any) => {
+      this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/617b6630f6fc97b776279afa`).subscribe((data: DataRequestMID) => {
         if (data) {
           Swal.fire({
             title: 'Guardado exitoso',
