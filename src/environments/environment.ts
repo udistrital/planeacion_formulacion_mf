@@ -14,8 +14,8 @@ export const environment = {
   //SERVICES PLANEACIÓN
   PLANES_CRUD: 'http://pruebasapi2.intranetoas.udistrital.edu.co:8523/',
   // PLANES_CRUD: 'http://localhost:8080/', 
-  // PLANES_MID: 'http://pruebasapi2.intranetoas.udistrital.edu.co:8524/v1/',
-  PLANES_MID: 'http://localhost:8081/v1/',
+  PLANES_MID: 'http://pruebasapi2.intranetoas.udistrital.edu.co:8524/v1/',
+  // PLANES_MID: 'http://localhost:8081/v1/',
   PLANEACION_ARBOL_MID: 'http://pruebasapi.intranetoas.udistrital.edu.co:8550/v1/',
   // PLANEACION_FORMULACION_MID: 'http://pruebasapi2.intranetoas.udistrital.edu.co:8551/v1/',
   PLANEACION_FORMULACION_MID: 'http://localhost:8524/v1/',

@@ -22,7 +22,7 @@ export type Plan = {
   formato: boolean;
   nombre: string;
   tipo_plan_id: string;
-  vigencia: string;
+  vigencia?: string;
   fecha_creacion: string;
   fecha_modificacion: string;
   __v: number;
