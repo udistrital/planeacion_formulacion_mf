@@ -1,16 +1,20 @@
-import { Component, Input, OnInit, Output, ViewChild, EventEmitter } from '@angular/core';
+import { formatCurrency, getCurrencySymbol } from '@angular/common';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { FormGroup } from '@angular/forms';
+import { FloatLabelType } from '@angular/material/form-field';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
-import Swal from 'sweetalert2';
 import { isNumeric } from "rxjs/internal-compatibility";
-import { environment } from 'src/environments/environment';
-import { formatCurrency, getCurrencySymbol } from '@angular/common';
-import { rubros_aux } from '../recursos/rubros';
-import { FloatLabelType } from '@angular/material/form-field';
+import { Actividad } from 'src/app/@core/models/actividad';
+import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { Plan } from 'src/app/@core/models/plan';
+import { Vigencia } from 'src/app/@core/models/vigencia';
+import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { RequestManager } from 'src/app/@core/services/requestManager';
-import { DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { environment } from 'src/environments/environment';
+import Swal from 'sweetalert2';
+import { rubros_aux } from '../recursos/rubros';
 
 @Component({
   selector: 'app-contratistas',
@@ -27,7 +31,7 @@ export class ContratistasComponent implements OnInit {
   dataSource!: MatTableDataSource<any>;
   total!: number;
   contratistas!: any[];
-  actividades!: any[];
+  actividades!: Actividad[];
   perfiles!: any[];
   accionBoton!: string;
   tipoIdenti!: string;
@@ -35,7 +39,7 @@ export class ContratistasComponent implements OnInit {
   errorDataSource: boolean = false;
   contador: number = 0;
   estadoPlan!: string;
-  Plan: any;
+  infoPlan!: Plan;
   readonlyObs!: boolean;
   readonlyTable: boolean = false;
   mostrarObservaciones!: boolean;
@@ -47,18 +51,20 @@ export class ContratistasComponent implements OnInit {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-  @Input() dataSourceActividades!: MatTableDataSource<any>;
+  @Input() dataSourceActividades!: MatTableDataSource<Actividad>;
   @Input() dataTabla!: boolean;
   @Input() plan!: string;
   @Input() rol!: string;
-  @Input() versiones!: any[];
-  @Input() vigencia: any;
+  @Input() versiones!: Plan[];
+  @Input() vigencia!: Vigencia;
   @Output() acciones = new EventEmitter<any>();
   constructor(
-    private request: RequestManager
+    private request: RequestManager,
+    private codigosService: CodigosService
   ) { }
 
-  ngOnInit(): void {
+  async ngOnInit(){
+    await this.codigosService.cargarIdentificadores();
     this.loadPlan();
     this.dataSource = new MatTableDataSource<any>();
     this.loadPerfiles();
@@ -68,9 +74,9 @@ export class ContratistasComponent implements OnInit {
   }
 
   loadPlan() {
-    this.request.get(environment.PLANES_CRUD, `plan/` + this.plan).subscribe((data: any) => {
+    this.request.get(environment.PLANES_CRUD, `plan/${this.plan}`).subscribe((data: DataRequest) => {
       if (data.Data != null) {
-        this.Plan = data.Data;
+        this.infoPlan = data.Data;
         this.getEstado();
       }
     })
@@ -78,7 +84,7 @@ export class ContratistasComponent implements OnInit {
 
   loadVigenciaConsulta() {
     let aux: number = + this.vigencia.Nombre;
-    this.request.get(environment.PARAMETROS_SERVICE, `periodo?query=Nombre:` + (aux - 1).toString()).subscribe((data: any) => {
+    this.request.get(environment.PARAMETROS_SERVICE, `periodo?query=Nombre:${(aux - 1)}`).subscribe((data: DataRequest) => {
       if (data) {
         let auxVigencia = data.Data[0];
         if (auxVigencia.Id != null) {
@@ -97,7 +103,7 @@ export class ContratistasComponent implements OnInit {
     })
   }
 
-  updateValue(element: any, rowIndex: any) {
+  updateValue(element: any, rowIndex: number) {
     let val = parseFloat(element.valorUnitario);
     if (Number.isNaN(val)) {
       let auxVal = element.valorUnitario.replace(/\$|,/g, '')
@@ -199,7 +205,7 @@ export class ContratistasComponent implements OnInit {
 
 
   verificarVersiones(): boolean {
-    let preAval = this.versiones.filter(group => group.estado_plan_id.match('614d3b4401c7a222052fac05'));
+    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoPreAval)));
     if (preAval.length != 0) {
       return true;
     } else {
@@ -207,7 +213,7 @@ export class ContratistasComponent implements OnInit {
     }
   }
   verificarObservaciones(): boolean {
-    let preAval = this.versiones.filter(group => group.estado_plan_id.match('614d3b1e01c7a265372fac03'));
+    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoRevisado)));
     if (preAval.length != 0) {
       return true;
     } else {
@@ -216,14 +222,13 @@ export class ContratistasComponent implements OnInit {
   }
 
   getEstado() {
-    this.request.get(environment.PLANES_CRUD, `estado-plan/` + this.Plan.estado_plan_id).subscribe((data: any) => {
+    this.request.get(environment.PLANES_CRUD, `estado-plan/${this.infoPlan.estado_plan_id}`).subscribe((data: DataRequest) => {
       if (data) {
         this.estadoPlan = data.Data.nombre;
         this.displayedColumns = this.visualizarColumnas();
         this.displayedHeaders = this.visualizarHeaders();
       }
-    }),
-      (error: any) => {
+    }, (error) => {
         Swal.fire({
           title: 'Error en la operación',
           icon: 'error',
@@ -232,14 +237,15 @@ export class ContratistasComponent implements OnInit {
           timer: 2500
         })
       }
+    )
   }
 
   loadTabla() {
     if (this.dataTabla) {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/6184b3e6f6fc97850127bb68`).subscribe((dataG: DataRequestMID) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionContratistas)}`).subscribe((dataG: DataRequestMID) => {
         if (dataG.data != null) {
           this.dataSource.data = dataG.data;
-          this.rubroSeleccionado = rubros_aux[rubros_aux.findIndex((e: any) => e.Codigo === this.dataSource.data[0].rubro)]
+          this.rubroSeleccionado = rubros_aux[rubros_aux.findIndex((r) => r.Codigo === this.dataSource.data[0].rubro)]
           this.validarIncremento();
         }
       })
@@ -247,7 +253,7 @@ export class ContratistasComponent implements OnInit {
   }
 
   loadPerfiles() {
-    this.request.get(environment.PARAMETROS_SERVICE, `parametro?query=TipoParametroId:36`).subscribe((data: any) => {
+    this.request.get(environment.PARAMETROS_SERVICE, `parametro?query=TipoParametroId:${this.codigosService.getId(TIPO.ParametroPerfilContratistas)}`).subscribe((data: DataRequest) => {
       if (data) {
         this.perfiles = data.Data
       }
@@ -321,7 +327,7 @@ export class ContratistasComponent implements OnInit {
     }
   }
 
-  getTotal(element: any, rowIndex: any) {
+  getTotal(element: any, rowIndex: number) {
     let strValUnitario = element.valorUnitario.replace(/\$|,/g, '')
     let aux = parseInt(strValUnitario, 10);
     let valor = parseFloat(((aux * element.meses + (element.dias * (aux / 30))) * element.cantidad).toFixed(2))
@@ -329,7 +335,7 @@ export class ContratistasComponent implements OnInit {
     this.getIncremento(element, rowIndex);
   }
 
-  getIncremento(element: any, rowIndex: any) {
+  getIncremento(element: any, rowIndex: number) {
     if (this.porcentajeIncremento == '' || this.porcentajeIncremento == undefined) {
       this.dataSource.data[rowIndex].valorUnitarioInc = this.dataSource.data[rowIndex].valorUnitario;
       this.dataSource.data[rowIndex].valorTotalInc = this.dataSource.data[rowIndex].valorTotal;
@@ -444,7 +450,7 @@ export class ContratistasComponent implements OnInit {
     }
   }
 
-  onSelected(event: any, rowIndex: any) {
+  onSelected(event: any, rowIndex: number) {
     if (event.value == undefined) {
       this.dataSource.data[rowIndex].valorUnitario = '';
     } else {

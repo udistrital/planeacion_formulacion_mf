@@ -13,6 +13,7 @@ import { PeriodoSeguimiento } from 'src/app/@core/models/periodo';
 import { Plan, PlanInteres, ResumenPlan } from 'src/app/@core/models/plan';
 import { InfoTercero, TerceroFormulacion } from 'src/app/@core/models/tercero';
 import { Vigencia } from 'src/app/@core/models/vigencia';
+import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import { VerificarFormulario } from 'src/app/@core/services/verificarFormulario';
 import { ImplicitAutenticationService } from 'src/app/@core/utils/implicit_autentication.service';
@@ -57,7 +58,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   banderaIdentDocentes!: boolean;
   banderaUltimaVersion!: boolean;
   banderaEstadoDatos!: boolean;
-  planEnArray!: boolean;
   tipoPlanId!: string;
   idPadre!: string;
   tipoPlanIndicativo!: string;
@@ -81,7 +81,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   moduloVisible: boolean;
   rol!: string;
   isChecked: boolean
-  defaultFilterPredicate?: (data: Actividad, filter: string) => boolean;
+  defaultFilterPredicate = (data: Actividad, filterValue: string) => {
+    return (data.activo ? "Activo" : "Inactivo") === filterValue;
+  };
 
   formArmonizacion: FormGroup;
   formSelect: FormGroup;
@@ -94,9 +96,11 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     private formBuilder: FormBuilder,
     private request: RequestManager,
     private autenticationService: ImplicitAutenticationService,
+    private codigosService: CodigosService,
     private activatedRoute: ActivatedRoute,
-    private verificarFormulario: VerificarFormulario
+    private verificarFormulario: VerificarFormulario,
   ) {
+    codigosService.cargarIdentificadores()
     this.loadPeriodos();
     this.formArmonizacion = this.formBuilder.group({
       selectPED: ['',],
@@ -121,14 +125,12 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.pendienteCheck = false;
   }
 
-  //displayedColumns: string[] = ['numero', 'nombre', 'rubro', 'valor', 'observacion', 'activo'];
-  //columnsToDisplay: string[] = this.displayedColumns.slice();
-
   displayedColumns: string[] = [];
   columnsToDisplay: string[] = []
   dataSource!: MatTableDataSource<Actividad>;
 
   async ngOnInit() {
+    await this.codigosService.cargarIdentificadores();
     await this.autenticationService.getRoles().then((roles)=>{
       if (roles.find((x) => x == 'PLANEACION')) {
         this.rol = 'PLANEACION';
@@ -190,7 +192,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   applyFilter(event: Event) {
     const filterValue = (event.target as HTMLInputElement).value;
-    this.dataSource.filterPredicate = this.defaultFilterPredicate!;
+    this.dataSource.filterPredicate = this.defaultFilterPredicate;
     this.dataSource.filter = filterValue.trim().toLowerCase();
     if (this.dataSource.paginator) {
       this.dataSource.paginator.firstPage();
@@ -199,9 +201,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   filterActive() {
     if (!this.isChecked) {
-      this.dataSource.filterPredicate = function(data: Actividad, filterValue: string) {
-        return (data.activo ? "Activo" : "Inactivo") === filterValue;
-      };
+      this.dataSource.filterPredicate = this.defaultFilterPredicate;
       this.dataSource.filter = "Activo"
       if (this.dataSource.paginator) {
         this.dataSource.paginator.firstPage();
@@ -223,7 +223,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       }
     });
-    if (!this.planEnArray) {
+    if (!this.existePlan(this.planesInteresArray, plan._id)) {
       this.moduloVisible = true;
       Swal.close()
     } else {
@@ -233,7 +233,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         unidades_interes: JSON.stringify([unidad_interes]),
         planes_interes: JSON.stringify([plan_interes]),
         periodo_id: this.vigencia.Id.toString(),
-        tipo_seguimiento_id: '6260e975ebe1e6498f7404ee'
+        tipo_seguimiento_id: this.codigosService.getId(TIPO.SeguimientoFormulacion)
       }
       await new Promise((resolve, reject) => {
         this.request
@@ -408,7 +408,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         if (data) {
           // No se puede traer filtrado desde PLANES_CRUD, al parecer excede la cantidad de parametros
           this.planes = (data.Data as Plan[]).filter(
-            (p) => p.tipo_plan_id != "611af8464a34b3599e3799a2"
+            (p) => p.tipo_plan_id != this.codigosService.getId(TIPO.PlanProyecto)
           );
           await this.loadPlanesPeriodoSeguimiento();
           resolve(this.planes);
@@ -439,7 +439,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     const periodo_seguimiento = {
       unidades_interes: JSON.stringify([unidad_interes]),
       periodo_id: this.vigencia.Id.toString(),
-      tipo_seguimiento_id: '6260e975ebe1e6498f7404ee'
+      tipo_seguimiento_id: this.codigosService.getId(TIPO.SeguimientoFormulacion)
     }
     return await new Promise<(Plan | PlanInteres)[]>((resolve, reject) => {
       this.request
@@ -454,7 +454,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                   // Recorre los planes en Interes y solo agrega los que no existian
                   planesInteresArray.forEach(plan => {
                     if (!this.existePlan(this.planesInteresArray, plan._id)){
-                      this.planes = [...this.planesInteresArray, plan]
+                      this.planesInteresArray = [...this.planesInteresArray, plan]
                     }
                     if (!this.existePlan(this.planes, plan._id)){
                       this.planes = [...this.planes, plan]
@@ -704,9 +704,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.planAsignado = false;
       this.dataT = false;
       this.isChecked = true;
-      this.planEnArray = this.planesInteresArray.some(item => item._id === plan._id);
       await this.verificarFechas(plan);
-      await this.busquedaPlanes(plan, this.planEnArray);
+      await this.busquedaPlanes(plan);
     }
   }
 
@@ -816,21 +815,21 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   getIconEstado() {
-    if (this.plan.estado_plan_id == '614d3ad301c7a200482fabfd') {
+    if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoEnFormulacion)) {
       this.iconEstado = "create";
-    } else if (this.plan.estado_plan_id == '614d3aeb01c7a245952fabff') {
+    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoFormulado)) {
       this.iconEstado = "assignment_turned_in";
-    } else if (this.plan.estado_plan_id == '614d3b0301c7a2a44e2fac01') {
+    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoEnRevision)) {
       this.iconEstado = "pageview";
-    } else if (this.plan.estado_plan_id == '614d3b1e01c7a265372fac03') {
+    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoRevisado)) {
       this.iconEstado = "assignment_return";
-    } else if (this.plan.estado_plan_id == '614d3b4401c7a222052fac05') {
+    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoPreAval)) {
       this.iconEstado = "done";
-    } else if (this.plan.estado_plan_id == '6153355601c7a2365b2fb2a1') {
+    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoAval)) {
       this.iconEstado = "done_all"
-    } else if (this.plan.estado_plan_id == '615335c501c7a213a12fb2a3') {
+    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoAjustePresupuestal)) {
       this.iconEstado = "build";
-    } else if (this.plan.estado_plan_id == '65bbf86918f02a27a456d20f') {
+    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoRevisionVerificada)) {
       this.iconEstado = "spellcheck";
     }
   }
@@ -871,10 +870,10 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     )
   }
 
-  async busquedaPlanes(planB: Plan, bandera = false) {
+  async busquedaPlanes(planB: Plan) {
     try {
       // Antes de cargar algún plan, hago la búsqueda del formato si tiene datos y la bandera "banderaEstadoDatos" se vuelve true o false.
-      await this.cargaFormato(planB, bandera);
+      await this.cargaFormato(planB);
       //validación con bandera para el estado de los datos de los planes.
       if (this.banderaEstadoDatos) {
         this.request.get(environment.PLANES_CRUD, `plan?query=dependencia_id:${this.unidad.Id},vigencia:${this.vigencia.Id},formato:false,nombre:${planB.nombre}`).subscribe(
@@ -934,7 +933,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   ajustarData(planRecienCreado: boolean) {
-    if (this.rol == 'PLANEACION' || this.rol == 'JEFE_UNIDAD_PLANEACION' || this.plan.estado_plan_id != '614d3ad301c7a200482fabfd') {
+    if (this.rol == 'PLANEACION' || this.rol == 'JEFE_UNIDAD_PLANEACION' || this.plan.estado_plan_id != this.codigosService.getId(TIPO.EstadoEnFormulacion)) {
       this.iconEditar = 'search'
     } else if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'JEFE_PLANEACION') {
       this.iconEditar = 'edit'
@@ -946,11 +945,11 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       };
       if (data_source != null) {
         this.dataSource = new MatTableDataSource(data_source);
-        this.defaultFilterPredicate = this.dataSource.filterPredicate;
         this.displayedColumns = displayed_columns as string[];
         this.columnsToDisplay = this.displayedColumns.slice();
         this.dataSource.paginator = this.paginator;
         this.dataSource.sort = this.sort;
+        this.dataSource.filterPredicate = this.defaultFilterPredicate;
         this.dataT = true;
         this.filterActive()
       } else if (!data_source && !displayed_columns) {
@@ -984,7 +983,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     })
   }
 
-  cargaFormato(plan: Plan, bandera = false) {
+  cargaFormato(plan: Plan) {
     Swal.fire({
       title: 'Cargando formato',
       timerProgressBar: true,
@@ -995,13 +994,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       },
     })
-    if (bandera) {
+    if (this.existePlan(this.planesInteresArray, plan._id)) {
       this.banderaEstadoDatos = true;
       Swal.close();
-      return Promise.reject();
+      return Promise.resolve();
     } else {
       return new Promise((resolve, reject) => {
-        this.request.get(environment.PLANES_MID, `formato/${plan._id}`).subscribe((data: any) => {
+        this.request.get(environment.PLANES_MID, `formato/${plan._id}`).subscribe((data) => {
           if (Array.isArray(data) && data[0] === null && Array.isArray(data[1]) &&
             data[1].length > 0 && Object.keys(data[1][0]).length === 0) {
             this.banderaEstadoDatos = false;
@@ -1176,16 +1175,16 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   identificarContratistas() {
-    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:6184b3e6f6fc97850127bb68`).subscribe((data: DataRequest) => {
+    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${this.codigosService.getId(TIPO.IdentificacionContratistas)}`).subscribe((data: DataRequest) => {
       if ((data.Data as any[]).length == 0) {
         var str1 = 'Identificación de Contratistas ' + this.plan.nombre
         var str2 = 'Identificación de Contratistas ' + this.plan.nombre + ' ' + this.unidad.Nombre
         let datoIdenti = {
-          "nombre": String(str1),
-          "descripcion": String(str2),
-          "plan_id": String(this.plan._id),
+          "nombre": str1,
+          "descripcion": str2,
+          "plan_id": this.plan._id,
           "dato": "{}",
-          "tipo_identificacion_id": "6184b3e6f6fc97850127bb68",
+          "tipo_identificacion_id": this.codigosService.getId(TIPO.IdentificacionContratistas),
           "activo": true
         }
         this.request.post(environment.PLANES_CRUD, `identificacion`, datoIdenti).subscribe((dataP: DataRequest) => {
@@ -1207,7 +1206,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   identificarRecursos() {
-    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:617b6630f6fc97b776279afa`).subscribe((data: DataRequest) => {
+    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${this.codigosService.getId(TIPO.IdentificacionRecursos)}`).subscribe((data: DataRequest) => {
       if ((data.Data as any[]).length == 0) {
         var str1 = 'Identificación de Recursos ' + this.plan.nombre
         var str2 = 'Identificación de Recursos ' + this.plan.nombre + ' ' + this.unidad.Nombre
@@ -1216,7 +1215,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           "descripcion": String(str2),
           "plan_id": String(this.plan._id),
           "dato": "{}",
-          "tipo_identificacion_id": "617b6630f6fc97b776279afa",
+          "tipo_identificacion_id": this.codigosService.getId(TIPO.IdentificacionRecursos),
           "activo": true
         }
         this.request.post(environment.PLANES_CRUD, `identificacion`, datoIdenti).subscribe((dataP: DataRequest) => {
@@ -1239,14 +1238,14 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   identificarDocentes() {
 
-    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:61897518f6fc97091727c3c3`).subscribe((data: DataRequest) => {
+    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequest) => {
       if ((data.Data as any[]).length == 0) {
         let datoIdenti = {
           "nombre": `Identificación de Docentes ${this.plan.nombre}`,
           "descripcion": `Identificación de Docentes ${this.plan.nombre} ${this.unidad.Nombre}`,
           "plan_id": this.plan._id,
           "dato": "{}",
-          "tipo_identificacion_id": "61897518f6fc97091727c3c3",
+          "tipo_identificacion_id": this.codigosService.getId(TIPO.IdentificacionDocentes),
           "activo": false
         }
         this.request.post(environment.PLANES_CRUD, `identificacion`, datoIdenti).subscribe((dataP: DataRequest) => {
@@ -1268,7 +1267,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   cargarPlanesDesarrollo() {
-    this.request.get(environment.PLANES_CRUD, `plan?query=activo:true,tipo_plan_id:616513b91634adfaffed52bf`).subscribe((data: DataRequest) => {
+    this.request.get(environment.PLANES_CRUD, `plan?query=activo:true,tipo_plan_id:${this.codigosService.getId(TIPO.PlanDesarrolloEstrategico)}`).subscribe((data: DataRequest) => {
       if (data) {
         this.planesDesarrollo = data.Data;
         this.formArmonizacion.get('selectPED')!.setValue(this.planesDesarrollo[0])
@@ -1278,7 +1277,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   cargarPlanesIndicativos() {
-    this.request.get(environment.PLANES_CRUD, `plan?query=tipo_plan_id:6239117116511e20405d408b`).subscribe((data: DataRequest) => {
+    this.request.get(environment.PLANES_CRUD, `plan?query=tipo_plan_id:${this.codigosService.getId(TIPO.PlanIndicativo)}`).subscribe((data: DataRequest) => {
       if (data) {
         this.planesIndicativos = data.Data;
         this.formArmonizacion.get('selectPI')!.setValue(this.planesIndicativos[0])
@@ -1289,32 +1288,12 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   receiveMessage(event: { bandera: string; armonizacionIds: string[]; }) {
     if (event.bandera === 'armonizar') {
-      /* var uid_n = event.fila.level;
-      var uid = event.fila.id; // id del nivel a editar
-      if (uid != this.dataArmonizacionPED.find(id => id === uid)) {
-        this.dataArmonizacionPED.push(uid)
-      } else {
-        const index = this.dataArmonizacionPED.indexOf(uid, 0);
-        if (index > -1) {
-          this.dataArmonizacionPED.splice(index, 1);
-        }
-      } */
       this.dataArmonizacionPED = event.armonizacionIds;
     }
   }
 
   receiveMessagePI(event: { bandera: string; armonizacionIds: string[]; }) {
     if (event.bandera === 'armonizar') {
-      /* var uid_n = event.fila.level;
-      var uid = event.fila.id; // id del nivel a editar
-      if (uid != this.dataArmonizacionPI.find(id => id === uid)) {
-        this.dataArmonizacionPI.push(uid)
-      } else {
-        const index = this.dataArmonizacionPI.indexOf(uid, 0);
-        if (index > -1) {
-          this.dataArmonizacionPI.splice(index, 1);
-        }
-      } */
       this.dataArmonizacionPI = event.armonizacionIds;
     }
   }
@@ -1457,7 +1436,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                 showCancelButton: true
               }).then((result) => {
                 if (result.isConfirmed) {
-                  this.plan.estado_plan_id = "614d3aeb01c7a245952fabff";
+                  this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoFormulado);
                   this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id).subscribe((data:DataRequest) => {
                     if (data) {
                       Swal.fire({
@@ -1555,7 +1534,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
-        this.plan.estado_plan_id = "614d3b0301c7a2a44e2fac01";
+        this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoEnRevision);
         this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id).subscribe((data: DataRequest) => {
           if (data) {
             Swal.fire({
@@ -1605,7 +1584,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
-        this.plan.estado_plan_id = "614d3b1e01c7a265372fac03";
+        this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoRevisado);
         this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id).subscribe((data: DataRequest) => {
           if (data) {
             Swal.fire({
@@ -1650,7 +1629,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     }).then(
       (result) => {
         if (result.isConfirmed) {
-          this.plan.estado_plan_id = "65bbf86918f02a27a456d20f";
+          this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoEnRevision);
           this.request
             .put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id)
             .subscribe((data: DataRequest) => {
@@ -1748,7 +1727,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
-        this.plan.estado_plan_id = "614d3b4401c7a222052fac05";
+        this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoPreAval);
         this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id).subscribe((data: DataRequest) => {
           if (data) {
             Swal.fire({
@@ -1819,7 +1798,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                       showConfirmButton: false,
                       timer: 2500,
                     });
-                    this.plan.estado_plan_id = "6153355601c7a2365b2fb2a1";
+                    this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoAval);
                     this.busquedaPlanes(this.plan);
                     this.loadData();
                     this.addActividad = false;

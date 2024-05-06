@@ -1,19 +1,20 @@
-import { Component, Input, Output, EventEmitter, OnInit, ViewChild } from '@angular/core';
-import { FormBuilder, FormGroup, FormControl, Validators } from '@angular/forms';
 import { FlatTreeControl } from '@angular/cdk/tree';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { FormBuilder, FormControl, FormGroup, Validators } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
-import { Observable } from 'rxjs'
 import { MatSort } from '@angular/material/sort';
 import {
   MatTreeFlatDataSource,
   MatTreeFlattener
 } from '@angular/material/tree';
+import { Observable } from 'rxjs';
+import { Nodo, Subgrupo } from 'src/app/@core/models/arbol';
+import { DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
+import { RequestManager } from 'src/app/@core/services/requestManager';
+import { ImplicitAutenticationService } from 'src/app/@core/utils/implicit_autentication.service';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
-import { ImplicitAutenticationService } from 'src/app/@core/utils/implicit_autentication.service';
-import { Nodo, Subgrupo } from 'src/app/@core/models/arbol';
-import { RequestManager } from 'src/app/@core/services/requestManager';
-import { DataRequestMID } from 'src/app/@core/models/dataRequest';
 
 const Checked: string = 'done';
 const Unchecked: string = 'compare_arrows';
@@ -89,15 +90,17 @@ export class ArbolComponent implements OnInit {
   constructor(
     private formBuilder: FormBuilder,
     private request: RequestManager,
-    private autenticationService: ImplicitAutenticationService
-
+    private autenticationService: ImplicitAutenticationService,
+    private codigosService: CodigosService
   ) {
-    let roles: any = this.autenticationService.getRoles();
-    if (roles.__zone_symbol__value.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
-      this.rol = 'JEFE_DEPENDENCIA'
-    } else if (roles.__zone_symbol__value.find((x: any) => x == 'PLANEACION')) {
-      this.rol = 'PLANEACION'
-    }
+    this.autenticationService.getRoles().then((roles)=>{
+      if (roles.find((rol) => rol == 'JEFE_DEPENDENCIA' || rol == 'ASISTENTE_DEPENDENCIA')) {
+        this.rol = 'JEFE_DEPENDENCIA'
+      } else if (roles.find((rol) => rol == 'PLANEACION')) {
+        this.rol = 'PLANEACION'
+      }
+    });
+    
   }
 
   getErrorMessage(campo: FormControl) {
@@ -109,7 +112,7 @@ export class ArbolComponent implements OnInit {
   }
 
   ngOnChanges(changes: any) {
-    if (this.tipoPlanId !== '611af8464a34b3599e3799a2') {
+    if (this.tipoPlanId !== this.codigosService.getId(TIPO.PlanProyecto)) {
       if (this.idPlan !== this.planActual) {
         this.loadArbolMid();
         this.planActual = this.idPlan;
@@ -346,7 +349,8 @@ export class ArbolComponent implements OnInit {
 
   hasChild = (_: number, node: Nodo) => node.expandable;
 
-  ngOnInit(): void {
+  async ngOnInit() {
+    await this.codigosService.cargarIdentificadores();
     this.formConstruirPUI = this.formBuilder.group({
       infoControl: ['', Validators.required],
       requiredfile: ['', Validators.required]
