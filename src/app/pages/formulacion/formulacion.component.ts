@@ -1000,7 +1000,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       return Promise.resolve();
     } else {
       return new Promise((resolve, reject) => {
-        this.request.get(environment.PLANES_MID, `formato/${plan._id}`).subscribe((data) => {
+        this.request.get(environment.PLANEACION_FORMATO_MID, `formato/${plan._id}`).subscribe((dataRes: DataRequestMID) => {
+          const data = dataRes.data;
           if (Array.isArray(data) && data[0] === null && Array.isArray(data[1]) &&
             data[1].length > 0 && Object.keys(data[1][0]).length === 0) {
             this.banderaEstadoDatos = false;
