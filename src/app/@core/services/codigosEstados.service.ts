@@ -31,7 +31,7 @@ export class CodigosService {
     { path: "planes", endpoint: "tipo-identificacion", query: "codigo_abreviacion:IC_SP,activo:true", },
     { path: "planes", endpoint: "tipo-identificacion", query: "codigo_abreviacion:IR_SP,activo:true", },
     { path: "planes", endpoint: "tipo-identificacion", query: "codigo_abreviacion:ID_SP,activo:true", },
-    { path: "planes", endpoint: "tipo-plan", query: "codigo_abreviacion:PR_SP,activo:false", },
+    { path: "planes", endpoint: "tipo-plan", query: "codigo_abreviacion:PR_SP,activo:true", },
     { path: "planes", endpoint: "tipo-plan", query: "codigo_abreviacion:PD_SP,activo:true", },
     { path: "planes", endpoint: "tipo-plan", query: "codigo_abreviacion:PLI_SP,activo:true", },
     { path: "planes", endpoint: "estado-plan", query: "codigo_abreviacion:EF_SP,activo:true", },
