@@ -1,16 +1,19 @@
-import { Component, OnInit, ViewChild, Output, EventEmitter, Input } from '@angular/core';
+import { formatCurrency, getCurrencySymbol } from '@angular/common';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
+import { FormControl } from '@angular/forms';
+import { FloatLabelType } from '@angular/material/form-field';
 import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
+import { isNumeric } from 'rxjs/internal-compatibility';
+import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { Plan } from 'src/app/@core/models/plan';
+import { Vigencia } from 'src/app/@core/models/vigencia';
+import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
+import { RequestManager } from 'src/app/@core/services/requestManager';
 import Swal from 'sweetalert2';
 import { environment } from '../../../environments/environment';
-import { FormControl } from '@angular/forms';
-import { isNumeric } from 'rxjs/internal-compatibility';
-import { formatCurrency, getCurrencySymbol } from '@angular/common';
 import { rubros_aux } from '../recursos/rubros';
-import { FloatLabelType } from '@angular/material/form-field';
-import { RequestManager } from 'src/app/@core/services/requestManager';
-import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
 
 @Component({
   selector: 'app-docentes',
@@ -57,14 +60,15 @@ export class DocentesComponent implements OnInit {
   @Input() dataTabla!: boolean;
   @Input() plan!: string;
   @Input() rol!: string;
-  @Input() versiones!: any[];
-  @Input() vigencia: any;
+  @Input() versiones!: Plan[];
+  @Input() vigencia!: Vigencia;
   @Output() acciones = new EventEmitter<any>();
-  constructor(private request: RequestManager) {
+  constructor(private request: RequestManager, private codigosService: CodigosService) {
     this.loadRubros();
   }
 
-  ngOnInit(): void {
+  async ngOnInit() {
+    await this.codigosService.cargarIdentificadores();
     this.dataSourceRHF = new MatTableDataSource<any>();
     this.dataSourceRHVPRE = new MatTableDataSource<any>();
     this.dataSourceRHVPOS = new MatTableDataSource<any>();
@@ -223,7 +227,7 @@ export class DocentesComponent implements OnInit {
           "rubro": "",
           "codigo": ""
         }];
-      this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:` + this.plan + `,tipo_identificacion_id:61897518f6fc97091727c3c3`).subscribe((data: any) => {
+      this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:` + this.plan + `,tipo_identificacion_id:${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequest) => {
         if (data) {
           let identificacion = data.Data[0];
           if (identificacion.activo === false) {
@@ -401,7 +405,7 @@ export class DocentesComponent implements OnInit {
     }
   }
 
-  getDataSource(tipo: any) {
+  getDataSource(tipo: string) {
     switch (tipo) {
       case "RHF":
         return this.dataSourceRHF.data;
@@ -440,7 +444,7 @@ export class DocentesComponent implements OnInit {
     }
   }
 
-  getCalculosDocentes(element: any, rowIndex: any, tipo: any) {
+  getCalculosDocentes(element: any, rowIndex: number, tipo: string) {
     //Recrear body
     let data = {
       "tipoDocente": tipo,
@@ -478,7 +482,7 @@ export class DocentesComponent implements OnInit {
 
   getData() {
     return new Promise((resolve) => {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/61897518f6fc97091727c3c3`).subscribe((data: DataRequestMID) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequestMID) => {
         if (data) {
           this.data = data.data;
           resolve(this.data)
@@ -506,8 +510,7 @@ export class DocentesComponent implements OnInit {
             this.displayedColumns = this.visualizarColumnas();
             this.displayedHeaders = this.visualizarHeaders();
           }
-        },
-        (error: any) => {
+        }, (error) => {
           Swal.fire({
             title: "Error en la operación",
             icon: "error",
@@ -622,32 +625,24 @@ export class DocentesComponent implements OnInit {
   }
 
   verificarVersiones(): boolean {
-    let preAval = this.versiones.filter(group => group.estado_plan_id.match('614d3b4401c7a222052fac05'));
-    if (preAval.length != 0) {
-      return true;
-    } else {
-      return false;
-    }
+    let preAval = this.versiones.filter(p => p.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoPreAval)));
+    return preAval.length != 0;
   }
 
   verificarObservaciones(): boolean {
-    let preAval = this.versiones.filter(group => group.estado_plan_id.match('614d3b1e01c7a265372fac03'));
-    if (preAval.length != 0) {
-      return true;
-    } else {
-      return false;
-    }
+    let preAval = this.versiones.filter(p => p.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoRevisado)));
+    return preAval.length != 0;
   }
 
-  prevStep(step: any) {
+  prevStep(step: number) {
     this.activedStep = step - 1;
   }
 
-  nextStep(step: any) {
+  nextStep(step: number) {
     this.activedStep = step + 1;
   }
 
-  addElement(tipo: any) {
+  addElement(tipo: string) {
     if (tipo === 'RHF') {
       this.dataSourceRHF.data.unshift({
         nivel: 'Pregrado',
@@ -883,7 +878,7 @@ export class DocentesComponent implements OnInit {
     }
   }
 
-  onChangeRubro(event: any, rowIndex: any) {
+  onChangeRubro(event: { value: any; }, rowIndex: number) {
     if (this.nivel == "pregrado") {
       if (event == undefined) {
         this.dataSourceRubrosPre.data[rowIndex].codigo = '';
@@ -956,7 +951,7 @@ export class DocentesComponent implements OnInit {
     }
   }
 
-  onChangeTipo(element: any, rowIndex: any, tipo: any) {
+  onChangeTipo(element: any, rowIndex: number, tipo: string) {
     if (element.tipo != "H. Catedra Honorarios") {
       Swal.fire({
         icon: 'warning',
@@ -975,7 +970,7 @@ export class DocentesComponent implements OnInit {
     this.getCalculosDocentes(element, rowIndex, tipo)
   }
 
-  onChangeCategoria(element: any, rowIndex: any, tipo: any) {
+  onChangeCategoria(element: any, rowIndex: number, tipo: string) {
     this.getCalculosDocentes(element, rowIndex, tipo)
   }
 
@@ -988,7 +983,7 @@ export class DocentesComponent implements OnInit {
     })
   }
 
-  onChangeCantidad(element: any, rowIndex: any, tipo: any) {
+  onChangeCantidad(element: any, rowIndex: number, tipo: string) {
     if (element.cantidad < 1 || !Number.isInteger(element.cantidad)) {
       this.mostrarMensajeValorInvalido()
       const dataSource = this.getDataSource(tipo)!
@@ -998,7 +993,7 @@ export class DocentesComponent implements OnInit {
     }
   }
 
-  onChangeSemanas(element: any, rowIndex: any, tipo: any) {
+  onChangeSemanas(element: any, rowIndex: number, tipo: string) {
     if (element.semanas < 1 || !Number.isInteger(element.semanas)) {
       this.mostrarMensajeValorInvalido()
       const dataSource = this.getDataSource(tipo)!
@@ -1008,7 +1003,7 @@ export class DocentesComponent implements OnInit {
     }
   }
 
-  onChangeHoras(element: any, rowIndex: any, tipo: any) {
+  onChangeHoras(element: any, rowIndex: number, tipo: string) {
     if (tipo === "RHF") {
       if (element.tipo === "Medio Tiempo") {
         this.dataSourceRHF.data[rowIndex].horas = 20;
@@ -1087,7 +1082,6 @@ export class DocentesComponent implements OnInit {
       })
     } else {
       if (this.verificarTablas()) {
-        let arreglo: string[] = [];
         this.accionBoton = 'guardar';
         this.tipoIdenti = 'docentes';
         let accion = this.accionBoton;
@@ -1146,7 +1140,7 @@ export class DocentesComponent implements OnInit {
           "rubros_pos": dataRubrosPos
         }
         let aux = JSON.stringify(Object.assign({}, identificaciones));
-        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, aux, `${this.plan}/61897518f6fc97091727c3c3`).subscribe((data: DataRequestMID) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, aux, `${this.plan}/${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequestMID) => {
           if (data) {
             Swal.fire({
               title: 'Guardado exitoso',
@@ -1178,7 +1172,7 @@ export class DocentesComponent implements OnInit {
     this.acciones.emit({ data, accion, identi });
   }
 
-  verificarCesantias(element: any, rowIndex: any, tipo: any) {
+  verificarCesantias(element: any, rowIndex: number, tipo: string) {
     const dataSource = this.getDataSource(tipo)!
 
     if (element.cesantias === "N/A") {
@@ -1217,7 +1211,7 @@ export class DocentesComponent implements OnInit {
       }
   }
 
-  verificarPensiones(element: any, rowIndex: any, tipo: any) {
+  verificarPensiones(element: any, rowIndex: number, tipo: string) {
     const dataSource = this.getDataSource(tipo)!
 
     if (element.cesantias === "N/A") {

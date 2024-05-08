@@ -1,14 +1,18 @@
-import { Component, OnInit, ViewChild, Input, Output, EventEmitter } from '@angular/core';
+import { formatCurrency, getCurrencySymbol } from '@angular/common';
+import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
-import Swal from 'sweetalert2';
 import { isNumeric } from 'rxjs/internal-compatibility';
-import { environment } from '../../../environments/environment';
-import { formatCurrency, getCurrencySymbol } from '@angular/common';
-import { rubros_aux } from './rubros';
+import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
 import { RequestManager } from 'src/app/@core/services/requestManager';
-import { DataRequestMID } from 'src/app/@core/models/dataRequest';
+import Swal from 'sweetalert2';
+import { environment } from '../../../environments/environment';
+import { rubros_aux } from './rubros';
+import { Plan } from 'src/app/@core/models/plan';
+import { Tipo } from 'src/app/@core/models/tipo';
+import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
+import { Actividad } from 'src/app/@core/models/actividad';
 
 @Component({
   selector: 'app-recursos',
@@ -21,13 +25,13 @@ export class RecursosComponent implements OnInit {
   columnsToDisplay!: string[];
   dataSource!: MatTableDataSource<any>;
   total!: number;
-  actividades!: any[];
+  actividades!: Actividad[];
   accionBoton!: string;
   selectedActividades: any;
   tipoIdenti!: string;
   errorDataSource: boolean = false;
   contador: number = 0;
-  Plan: any;
+  infoPlan!: Plan;
   estadoPlan!: string;
   readonlyObs!: boolean;
   readonlyTable: boolean = false;
@@ -35,30 +39,32 @@ export class RecursosComponent implements OnInit {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
-  @Input() dataSourceActividades!: MatTableDataSource<any>;
+  @Input() dataSourceActividades!: MatTableDataSource<Actividad>;
   @Input() dataTabla!: boolean;
   @Input() plan!: string;
   @Input() rol!: string;
-  @Input() versiones!: any[];
+  @Input() versiones!: Plan[];
 
   @Output() acciones = new EventEmitter<any>();
-  constructor(private request: RequestManager,) {
+  constructor(private request: RequestManager,private codigosService: CodigosService) {
   }
 
   rubros!: any[];
 
-  ngOnInit(): void {
+  async ngOnInit() {
+    await this.codigosService.cargarIdentificadores();
     this.loadPlan();
     this.loadRubros();
-    this.dataSource = new MatTableDataSource<any>();
+    this.dataSource = new MatTableDataSource();
     this.actividades = this.dataSourceActividades.data;
     this.loadTabla();
+
   }
 
   loadPlan() {
-    this.request.get(environment.PLANES_CRUD, `plan/` + this.plan).subscribe((data: any) => {
+    this.request.get(environment.PLANES_CRUD, `plan/${this.plan}`).subscribe((data: DataRequest) => {
       if (data.Data != null) {
-        this.Plan = data.Data;
+        this.infoPlan = data.Data;
         this.getEstado();
       }
     })
@@ -66,21 +72,23 @@ export class RecursosComponent implements OnInit {
 
 
   getEstado() {
-    this.request.get(environment.PLANES_CRUD, `estado-plan/` + this.Plan.estado_plan_id).subscribe((data: any) => {
-      if (data) {
-        this.estadoPlan = data.Data.nombre;
-        this.displayedColumns = this.visualizarColumnas();
-      }
-    }),
-      (error: any) => {
-        Swal.fire({
-          title: 'Error en la operación',
-          icon: 'error',
-          text: `${JSON.stringify(error)}`,
-          showConfirmButton: false,
-          timer: 2500
-        })
-      }
+    this.request
+      .get(environment.PLANES_CRUD, `estado-plan/${this.infoPlan.estado_plan_id}`)
+      .subscribe((data: DataRequest) => {
+          if (data) {
+            this.estadoPlan = (data.Data as Tipo).nombre;
+            this.displayedColumns = this.visualizarColumnas();
+          }
+        }, (error) => {
+          Swal.fire({
+            title: "Error en la operación",
+            icon: "error",
+            text: `${JSON.stringify(error)}`,
+            showConfirmButton: false,
+            timer: 2500,
+          });
+        }
+      );
   }
 
   visualizarColumnas(): string[] {
@@ -133,7 +141,7 @@ export class RecursosComponent implements OnInit {
   }
 
   verificarVersiones(): boolean {
-    let preAval = this.versiones.filter(group => group.estado_plan_id.match('614d3b4401c7a222052fac05'));
+    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoPreAval)));
     if (preAval.length != 0) {
       return true;
     } else {
@@ -142,7 +150,7 @@ export class RecursosComponent implements OnInit {
   }
 
   verificarObservaciones(): boolean {
-    let preAval = this.versiones.filter(group => group.estado_plan_id.match('614d3b1e01c7a265372fac03'));
+    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoRevisado)));
     if (preAval.length != 0) {
       return true;
     } else {
@@ -161,18 +169,11 @@ export class RecursosComponent implements OnInit {
     })
     this.rubros = rubros_aux
     Swal.close();
-
-    // Comentario temporal por cambios de rubros
-    /*this.request.get(environment.PLANES_MID, `formulacion/get_rubros`).subscribe((data: any) => {
-      this.rubros = data.Data;
-      Swal.close();
-    })*/
-
   }
 
   loadTabla() {
     if (this.dataTabla) {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/617b6630f6fc97b776279afa`).subscribe((dataG: DataRequestMID) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionRecursos)}`).subscribe((dataG: DataRequestMID) => {
         if (dataG.data != null) {
           this.dataSource.data = dataG.data
         }
@@ -189,7 +190,7 @@ export class RecursosComponent implements OnInit {
     }
   }
 
-  updateValue(element: any, rowIndex: any) {
+  updateValue(element: any, rowIndex: number) {
     let val = parseInt(element.valor, 10);
     if (Number.isNaN(val)) {
       let auxVal = element.valor.replace(/\$|,/g, '')
@@ -279,7 +280,7 @@ export class RecursosComponent implements OnInit {
 
   }
 
-  onSelected(event: any, rowIndex: any) {
+  onSelected(event: any, rowIndex: number) {
     if (event == undefined) {
       this.dataSource.data[rowIndex].codigo = '';
     } else {
@@ -319,7 +320,7 @@ export class RecursosComponent implements OnInit {
         obj["index"] = num.toString();
       }
       let dataS = JSON.stringify(Object.assign({}, data))
-      this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/617b6630f6fc97b776279afa`).subscribe((data: DataRequestMID) => {
+      this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/${this.codigosService.getId(TIPO.IdentificacionRecursos)}`).subscribe((data: DataRequestMID) => {
         if (data) {
           Swal.fire({
             title: 'Guardado exitoso',
