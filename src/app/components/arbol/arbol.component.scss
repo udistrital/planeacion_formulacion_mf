@@ -1,24 +1,26 @@
-table {
-    width: 100%;
-  }
+@use "../styles/global";
 
-th {
-    color: white;
-    text-align: center;
+table {
+  width: 100%;
 }
 
-.header-align-right{
+th {
+  color: white;
+  text-align: center;
+}
+
+.header-align-right {
   display: flex;
   padding: 21px 0;
   justify-content: flex-end;
 }
 
-.td-align-right{
+.td-align-right {
   text-align: right;
   justify-content: flex-end;
 }
 
-.mat-column-nombre{
+.mat-column-nombre {
   word-wrap: break-word !important;
   white-space: unset !important;
   flex: 0 0 34% !important;
@@ -34,7 +36,7 @@ th {
   hyphens: auto;
 }
 
-.mat-column-descripcion{
+.mat-column-descripcion {
   word-wrap: break-word !important;
   white-space: unset !important;
   flex: 0 0 50% !important;
@@ -50,7 +52,7 @@ th {
   hyphens: auto;
 }
 
-.mat-column-activo{
+.mat-column-activo {
   word-wrap: break-word !important;
   white-space: unset !important;
   flex: 0 0 6% !important;
@@ -69,7 +71,7 @@ th {
   justify-content: flex-end;
 }
 
-.mat-column-actions{
+.mat-column-actions {
   word-wrap: break-word !important;
   white-space: unset !important;
   flex: 0 0 10% !important;

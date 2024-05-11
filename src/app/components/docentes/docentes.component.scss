@@ -1,3 +1,5 @@
+@use "../styles/global";
+
 table {
   width: 100%;
 }
@@ -8,13 +10,13 @@ th {
 }
 
 
-th.mat-header-cell {
+th.mat-mdc-header-cell {
   text-align: center;
   padding: 5px 5px 5px 0;
   color: white;
 }
 
-td.mat-cell {
+td.mat-mdc-cell {
   text-align: center;
   padding: 5px 5px 5px 0;
   color: black;
@@ -60,14 +62,14 @@ td.mat-cell {
     margin: 0px;
   }
 
-  .mat-row,
-  .mat-header-row {
+  .mat-mdc-row,
+  .mat-mdc-header-row {
     display: table-row;
     text-align: center;
   }
 
-  .mat-cell,
-  .mat-header-cell {
+  .mat-mdc-cell,
+  .mat-mdc-header-cell {
     text-align: center;
     word-wrap: initial;
     display: table-cell;
@@ -94,7 +96,7 @@ td.mat-cell {
   width: 97%;
 }
 
-.mat-raised-button {
+.mat-mdc-raised-button {
   margin: 0% 2% 0% 0%;
 }
 
@@ -106,11 +108,11 @@ textarea {
   text-align-last: left;
 }
 
-.mat-row:nth-child(even) {
+.mat-mdc-row:nth-child(even) .mat-mdc-cell {
   background-color: #E7D6D6;
 }
 
-.mat-row:nth-child(odd) {
+.mat-mdc-row:nth-child(odd) .mat-mdc-cell {
   background-color: white;
 }
 
@@ -126,7 +128,7 @@ textarea {
   background-color: var(--color700);
 }
 
-.mat-form-field {
+.mat-mdc-form-field {
   width: 100%;
 }
 

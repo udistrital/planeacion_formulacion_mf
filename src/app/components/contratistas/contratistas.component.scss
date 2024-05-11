@@ -1,31 +1,34 @@
-.mat-card{
+@use "../styles/global";
+
+.mat-card {
   background-color: #F1F5F8;
 }
 
 table {
-    width: 100%;
-  }
+  width: 100%;
+}
 
 th {
-    color: white;
-    text-align: center;
+  color: white;
+  text-align: center;
 }
 
 
-th.mat-header-cell, td.mat-cell {
-    text-align: center;
-    padding: 0 !important;
-    color:white;
+th.mat-mdc-header-cell,
+td.mat-mdc-cell {
+  text-align: center;
+  padding: 0 !important;
+  color: white;
 }
 
 
 
-.td-align-right{
+.td-align-right {
   text-align: right;
   justify-content: flex-end;
 }
 
-.header-align-right{
+.header-align-right {
   display: flex;
   padding: 21px 0;
   justify-content: flex-end;
@@ -42,11 +45,11 @@ th.mat-header-cell, td.mat-cell {
   color: #000000;
 }
 
-.material-icons-delete{
+.material-icons-delete {
   color: #000000;
 }
 
-.footer{
+.footer {
   text-align: center;
 }
 
@@ -54,34 +57,37 @@ th.mat-header-cell, td.mat-cell {
   display: block;
   width: 100%;
   overflow-x: auto;
+
   .mat-table {
-      width: 100%;
-      max-width: 100%;
-      margin-bottom: 1rem;
-      display: table;
-      border-collapse: collapse;
-      margin: 0px;
+    width: 100%;
+    max-width: 100%;
+    margin-bottom: 1rem;
+    display: table;
+    border-collapse: collapse;
+    margin: 0px;
   }
-  .mat-row,
-  .mat-header-row {
-      display: table-row;
-      text-align: center;
+
+  .mat-mdc-row,
+  .mat-mdc-header-row {
+    display: table-row;
+    text-align: center;
   }
-  .mat-cell,
-  .mat-header-cell {
-      text-align: center;
-      word-wrap: initial;
-      display: table-cell;
-      padding: 0px 5px;
-      line-break: unset;
-      width: auto;
-      white-space: nowrap;
-      overflow: hidden;
-      vertical-align: middle;
+
+  .mat-mdc-cell,
+  .mat-mdc-header-cell {
+    text-align: center;
+    word-wrap: initial;
+    display: table-cell;
+    padding: 0px 5px;
+    line-break: unset;
+    width: auto;
+    white-space: nowrap;
+    overflow: hidden;
+    vertical-align: middle;
   }
 }
 
-.textGuide{
+.textGuide {
   background-color: #ffff;
   border: 1px solid var(--primary);
   border-radius: 15px 15px 15px 15px;
@@ -92,10 +98,10 @@ th.mat-header-cell, td.mat-cell {
   padding: 1%;
   text-decoration: none;
   margin-bottom: 1%;
-  width: 97%; 
+  width: 97%;
 }
 
-textarea{
+textarea {
   resize: none;
   text-align: justify;
   white-space: pre-line;
@@ -103,11 +109,11 @@ textarea{
   text-align-last: left;
 }
 
-input{
+input {
   text-align: center;
 }
 
-.label-inc{
+.label-inc {
   border: 1px solid var(--primary);
   padding: 1%;
   border-radius: 10px 10px 10px 10px;
@@ -115,7 +121,7 @@ input{
   margin-bottom: 1%;
 }
 
-.label-rubro{
+.label-rubro {
   border: 1px solid var(--primary);
   height: unset;
   padding: 1%;
@@ -131,4 +137,4 @@ input{
   height: unset;
   padding-top: 0.9em;
   padding-bottom: 0.9em;
-} 
+}
