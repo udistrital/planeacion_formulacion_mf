@@ -15,7 +15,7 @@
                         id="incremento" [formControl]="incrementoInput" (change)="onChangeincremento()" placeholder="%"
                         required>
                 </mat-form-field>
-                <button mat-raised-button style="margin: 10px;" color="primary" (click)="loadIncremento()">Aplicar
+                <button mat-raised-button style="margin: 10px; color:white;" color="primary" (click)="loadIncremento()">Aplicar
                     Incremento</button>
             </div>
             <mat-vertical-stepper>
@@ -842,9 +842,9 @@
                             <!-- <mat-paginator [pageSize]="300" [pageSizeOptions]="[300]" aria-label="Select page of users"></mat-paginator> -->
                         </ng-container>
                         <div>
-                            <button mat-raised-button color="primary" type="submit" class="col-3 mt-2 mb-3"
+                            <button mat-raised-button color="primary" style="color: white;" type="submit" class="col-3 mt-2 mb-3"
                                 *ngIf="index !== 0" matStepperPrevious (click)="prevStep(index)">Volver</button>
-                            <button mat-raised-button color="primary" type="submit" class="col-3 mt-2 mb-3"
+                            <button mat-raised-button color="primary" style="color: white;" type="submit" class="col-3 mt-2 mb-3"
                                 *ngIf="!last" matStepperNext (click)="nextStep(index)">Siguiente</button>
                             <!-- <button *ngIf="index !== 0" matStepperPrevious class="btn btn-primary" type="button" (click)="prevStep(index)">Atrás</button>
                             <button *ngIf="!last" matStepperNext class="btn btn-primary" type="button" [disabled]="!formStep.at(index).valid" (click)="nextStep(index)">Siguiente</button>
@@ -933,9 +933,9 @@
             </u>
         </mat-card-content>
         <ng-container>
-            <button mat-raised-button style="margin: 10px;" color="primary" type="submit" class="col-3 mt-2 mb-3"
+            <button mat-raised-button style="margin: 10px; color:white;" color="primary" type="submit" class="col-3 mt-2 mb-3"
                 (click)="ocultarRecursos()">Cerrar</button>
-            <button mat-raised-button style="margin: 10px;" color="primary" type="submit" class="col-3 mt-2 mb-3"
+            <button mat-raised-button style="margin: 10px; color:white;" color="primary" type="submit" class="col-3 mt-2 mb-3"
                 [disabled]="banderaCerrar" (click)="guardarRecursos()" *ngIf="!readonlyObs || estadoPlan === 'En formulación'">Guardar</button>
         </ng-container>
     </mat-card-footer>

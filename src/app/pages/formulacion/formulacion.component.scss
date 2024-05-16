@@ -1,39 +1,40 @@
-.mat-card{
+@use "../../components/styles/global";
+
+.mat-mdc-card {
   background-color: #F1F5F8;
 }
 
-
 table {
-    width: 100%;
-    margin-bottom: 2%;
+  width: 100%;
+  margin-bottom: 2%;
 }
 
 th {
-    color: white;
-    text-align: center !important;
+  color: white;
+  text-align: center !important;
 }
 
-td{
+td {
   text-align: justify;
 }
 
-.td-align-left{
+.td-align-left {
   text-align: center;
   vertical-align: middle !important;
 }
 
-.td-align-right{
+.td-align-right {
   text-align: center;
 }
 
-.header-align-right{
+.header-align-right {
   padding: 21px 0;
 
 }
 
 
 
-.mat-raised-button{
+.mat-mdc-raised-button {
   text-align: center !important;
   margin: 1%;
   width: 20%;
@@ -41,7 +42,7 @@ td{
   display: inline;
 }
 
-.btn-formato{
+.btn-formato {
   align-content: center;
   display: flex;
 }
@@ -59,6 +60,7 @@ td{
   justify-content: center;
   text-align: center;
 }
+
 .flex {
   display: flex;
   vertical-align: middle;
@@ -82,7 +84,7 @@ td{
   border-color: var(--primary);
 }
 
-.container{
+.container {
   display: block !important;
   margin-top: 30px;
   margin-bottom: 30px;
@@ -91,8 +93,8 @@ td{
   width: 50%;
 }
 
-.notice{
-  display:  block !important;
+.notice {
+  display: block !important;
   width: fit-content;
   margin-top: 20px;
   margin-bottom: 20px;
@@ -100,13 +102,16 @@ td{
   margin-right: auto;
   background-color: lightyellow;
   font-style: oblique;
+  padding: 16px;
 }
 
-.icon-estado{
+.icon-estado {
   font-size: 40px;
+  width: auto;
+  height: auto;
 }
 
-.textGuide{
+.textGuide {
   background-color: #ffff;
   border: 1px solid var(--primary);
   border-radius: 15px 15px 15px 15px;
@@ -120,22 +125,12 @@ td{
   width: 97%;
 }
 
-.input-search{
+.input-search {
   width: 99%;
   height: 30px;
   border-radius: 5px 5px 5px 5px;
 }
 
-.toggle{
+.toggle {
   margin-left: 10%;
-  color: var(--primary);
 }
-
-::ng-deep .mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-thumb {
-  background-color: var(--primary);
-}
-
-::ng-deep .mat-slide-toggle.mat-checked:not(.mat-disabled) .mat-slide-toggle-bar {
-  background-color: rgb(145, 35, 35);
-}
-
