@@ -46,7 +46,7 @@ export class RecursosComponent implements OnInit {
   @Input() versiones!: Plan[];
 
   @Output() acciones = new EventEmitter<any>();
-  constructor(private request: RequestManager,private codigosService: CodigosService) {
+  constructor(private request: RequestManager, private codigosService: CodigosService) {
   }
 
   rubros!: any[];
@@ -75,19 +75,19 @@ export class RecursosComponent implements OnInit {
     this.request
       .get(environment.PLANES_CRUD, `estado-plan/${this.infoPlan.estado_plan_id}`)
       .subscribe((data: DataRequest) => {
-          if (data) {
-            this.estadoPlan = (data.Data as Tipo).nombre;
-            this.displayedColumns = this.visualizarColumnas();
-          }
-        }, (error) => {
-          Swal.fire({
-            title: "Error en la operación",
-            icon: "error",
-            text: `${JSON.stringify(error)}`,
-            showConfirmButton: false,
-            timer: 2500,
-          });
+        if (data) {
+          this.estadoPlan = (data.Data as Tipo).nombre;
+          this.displayedColumns = this.visualizarColumnas();
         }
+      }, (error) => {
+        Swal.fire({
+          title: "Error en la operación",
+          icon: "error",
+          text: `${JSON.stringify(error)}`,
+          showConfirmButton: false,
+          timer: 2500,
+        });
+      }
       );
   }
 
@@ -173,9 +173,9 @@ export class RecursosComponent implements OnInit {
 
   loadTabla() {
     if (this.dataTabla) {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionRecursos)}`).subscribe((dataG: DataRequestMID) => {
-        if (dataG.data != null) {
-          this.dataSource.data = dataG.data
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionRecursos)}`).subscribe((dataG: DataRequest) => {
+        if (dataG.Data != null) {
+          this.dataSource.data = dataG.Data
         }
       })
     }
@@ -320,7 +320,7 @@ export class RecursosComponent implements OnInit {
         obj["index"] = num.toString();
       }
       let dataS = JSON.stringify(Object.assign({}, data))
-      this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/${this.codigosService.getId(TIPO.IdentificacionRecursos)}`).subscribe((data: DataRequestMID) => {
+      this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/${this.codigosService.getId(TIPO.IdentificacionRecursos)}`).subscribe((data: DataRequest) => {
         if (data) {
           Swal.fire({
             title: 'Guardado exitoso',

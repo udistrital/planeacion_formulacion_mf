@@ -459,9 +459,9 @@ export class DocentesComponent implements OnInit {
 
     if (data.tipo != "" && data.categoria != "" && data.cantidad != 0 && data.semanas != 0 && data.horas != 0) {
       this.banderaCerrar = true
-      this.request.post(environment.PLANEACION_FORMULACION_MID, `formulacion/calculos_docentes`, data).subscribe((response: DataRequestMID) => {
+      this.request.post(environment.PLANEACION_FORMULACION_MID, `formulacion/calculos_docentes`, data).subscribe((response: DataRequest) => {
         if (response) {
-          let dataResponse = this.formatData(response.data)
+          let dataResponse = this.formatData(response.Data)
           this.limpiarPublicosyPrivados(dataResponse)
           const dataSource = this.getDataSource(tipo);
           Object.assign(dataSource?.[rowIndex], dataResponse);
@@ -482,9 +482,9 @@ export class DocentesComponent implements OnInit {
 
   getData() {
     return new Promise((resolve) => {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequestMID) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequest) => {
         if (data) {
-          this.data = data.data;
+          this.data = data.Data;
           resolve(this.data)
         }
       })
@@ -1140,7 +1140,7 @@ export class DocentesComponent implements OnInit {
           "rubros_pos": dataRubrosPos
         }
         let aux = JSON.stringify(Object.assign({}, identificaciones));
-        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, aux, `${this.plan}/${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequestMID) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, aux, `${this.plan}/${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequest) => {
           if (data) {
             Swal.fire({
               title: 'Guardado exitoso',
