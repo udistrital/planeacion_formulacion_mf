@@ -63,7 +63,7 @@ export class ContratistasComponent implements OnInit {
     private codigosService: CodigosService
   ) { }
 
-  async ngOnInit(){
+  async ngOnInit() {
     await this.codigosService.cargarIdentificadores();
     this.loadPlan();
     this.dataSource = new MatTableDataSource<any>();
@@ -229,22 +229,22 @@ export class ContratistasComponent implements OnInit {
         this.displayedHeaders = this.visualizarHeaders();
       }
     }, (error) => {
-        Swal.fire({
-          title: 'Error en la operación',
-          icon: 'error',
-          text: `${JSON.stringify(error)}`,
-          showConfirmButton: false,
-          timer: 2500
-        })
-      }
+      Swal.fire({
+        title: 'Error en la operación',
+        icon: 'error',
+        text: `${JSON.stringify(error)}`,
+        showConfirmButton: false,
+        timer: 2500
+      })
+    }
     )
   }
 
   loadTabla() {
     if (this.dataTabla) {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionContratistas)}`).subscribe((dataG: DataRequestMID) => {
-        if (dataG.data != null) {
-          this.dataSource.data = dataG.data;
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionContratistas)}`).subscribe((dataG: DataRequest) => {
+        if (dataG.Data != null) {
+          this.dataSource.data = dataG.Data;
           this.rubroSeleccionado = rubros_aux[rubros_aux.findIndex((r) => r.Codigo === this.dataSource.data[0].rubro)]
           this.validarIncremento();
         }
@@ -516,7 +516,7 @@ export class ContratistasComponent implements OnInit {
           obj["index"] = num.toString();
         }
         let dataS = JSON.stringify(Object.assign({}, data))
-        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/6184b3e6f6fc97850127bb68`).subscribe((data: DataRequestMID) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/6184b3e6f6fc97850127bb68`).subscribe((data: DataRequest) => {
           if (data) {
             Swal.fire({
               title: 'Guardado exitoso',

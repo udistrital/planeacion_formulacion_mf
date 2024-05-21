@@ -1,34 +1,37 @@
-.mat-card{
+@use "../styles/global";
+
+.mat-card {
   background-color: #F1F5F8;
 }
 
 ::ng-deep input.mat-input-element {
-color: #000000;
+  color: #000000;
 }
 
 
 ::ng-deep textarea.mat-input-element {
-color: #000000;
+  color: #000000;
 }
 
-.material-icons-delete{
-color: #000000;
+.material-icons-delete {
+  color: #000000;
 }
 
-.footer{
-text-align: center;
+.footer {
+  text-align: center;
 }
 
 
 .mat-table {
-    width: 100%;
-    max-width: 100%;
-    margin-bottom: 1rem;
-    display: table;
-    border-collapse: collapse;
-    margin: 0px;
+  width: 100%;
+  max-width: 100%;
+  margin-bottom: 1rem;
+  display: table;
+  border-collapse: collapse;
+  margin: 0px;
 }
-th.mat-header-cell{
+
+th.mat-mdc-header-cell {
   text-align: center;
   word-wrap: initial;
   padding: 0px 5px;
@@ -37,20 +40,21 @@ th.mat-header-cell{
   vertical-align: middle;
   color: white;
 }
-td.mat-cell{
-    text-align: center;
-    word-wrap: initial;
-    display: table-cell;
-    padding: 0px 5px;
-    line-break: unset;
-    width: auto;
-    white-space: nowrap;
-    overflow: hidden;
-    vertical-align: middle;
+
+td.mat-mdc-cell {
+  text-align: center;
+  word-wrap: initial;
+  display: table-cell;
+  padding: 0px 5px;
+  line-break: unset;
+  width: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  vertical-align: middle;
 }
 
 
-.textGuide{
+.textGuide {
   background-color: #ffff;
   border: 1px solid var(--primary);
   border-radius: 15px 15px 15px 15px;
@@ -61,10 +65,10 @@ td.mat-cell{
   padding: 1%;
   text-decoration: none;
   margin-bottom: 1%;
-  width: 97%; 
+  width: 97%;
 }
 
-textarea{
+textarea {
   resize: none;
   text-align: justify;
   white-space: pre-line;
@@ -72,7 +76,7 @@ textarea{
   text-align-last: left;
 }
 
-input{
+input {
   text-align: center;
 }
 
@@ -82,4 +86,4 @@ input{
   height: unset;
   padding-top: 0.9em;
   padding-bottom: 0.9em;
-} 
+}

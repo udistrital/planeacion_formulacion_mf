@@ -9,7 +9,7 @@ import {
 } from '@angular/material/tree';
 import { Observable } from 'rxjs';
 import { Nodo, Subgrupo } from 'src/app/@core/models/arbol';
-import { DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { DataRequest } from 'src/app/@core/models/dataRequest';
 import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import { ImplicitAutenticationService } from 'src/app/@core/utils/implicit_autentication.service';
@@ -93,14 +93,14 @@ export class ArbolComponent implements OnInit {
     private autenticationService: ImplicitAutenticationService,
     private codigosService: CodigosService
   ) {
-    this.autenticationService.getRoles().then((roles)=>{
+    this.autenticationService.getRoles().then((roles) => {
       if (roles.find((rol) => rol == 'JEFE_DEPENDENCIA' || rol == 'ASISTENTE_DEPENDENCIA')) {
         this.rol = 'JEFE_DEPENDENCIA'
       } else if (roles.find((rol) => rol == 'PLANEACION')) {
         this.rol = 'PLANEACION'
       }
     });
-    
+
   }
 
   getErrorMessage(campo: FormControl) {
@@ -135,11 +135,11 @@ export class ArbolComponent implements OnInit {
         Swal.showLoading();
       },
     })
-    this.request.get(environment.PLANEACION_ARBOL_MID, `arbol/${this.idPlan}`).subscribe((data: DataRequestMID) => {
+    this.request.get(environment.PLANEACION_ARBOL_MID, `arbol/${this.idPlan}`).subscribe((data: DataRequest) => {
       Swal.close();
-      if (data.data !== null) {
+      if (data.Data !== null) {
         this.mostrar = true;
-        this.dataSource.data = data.data;
+        this.dataSource.data = data.Data;
         if (this.armonizacionPED || this.armonizacionPI) {
           this.linksArbol()
           this.expandNodes()
