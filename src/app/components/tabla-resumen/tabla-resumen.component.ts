@@ -8,7 +8,7 @@ import {
 } from '@angular/core';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatTableDataSource } from '@angular/material/table';
-import { DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { DataRequest } from 'src/app/@core/models/dataRequest';
 import { ResumenPlan } from 'src/app/@core/models/plan';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import { environment } from 'src/environments/environment';
@@ -93,8 +93,8 @@ export class TablaResumenComponent implements OnInit, AfterViewInit {
       this.request
         .get(environment.PLANEACION_FORMULACION_MID, `formulacion/planes_formulacion`)
         .subscribe(
-          (data : DataRequestMID) => {
-            if ((data.data as ResumenPlan[]).length != 0) {
+          (data: DataRequest) => {
+            if ((data.Data as ResumenPlan[]).length != 0) {
               Swal.close();
             } else {
               Swal.close();
@@ -106,7 +106,7 @@ export class TablaResumenComponent implements OnInit, AfterViewInit {
                 timer: 2500,
               });
             }
-            resolve(data.data as ResumenPlan[]);
+            resolve(data.Data as ResumenPlan[]);
           },
           (error) => {
             Swal.close();
@@ -122,7 +122,7 @@ export class TablaResumenComponent implements OnInit, AfterViewInit {
             reject();
           }
         );
-    }).then((planes)=>{
+    }).then((planes) => {
       this.planes = planes;
     });
   }
