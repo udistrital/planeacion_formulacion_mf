@@ -5,7 +5,7 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { Actividad } from 'src/app/@core/models/actividad';
-import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { DataRequest } from 'src/app/@core/models/dataRequest';
 import { Dependencia, DependenciaTipoDependencia, TipoDependencia } from 'src/app/@core/models/dependencia';
 import { EstadoPlan } from 'src/app/@core/models/estadoPlan';
 import { Paso } from 'src/app/@core/models/formato';
@@ -15,9 +15,8 @@ import { InfoTercero, TerceroFormulacion } from 'src/app/@core/models/tercero';
 import { Vigencia } from 'src/app/@core/models/vigencia';
 import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { RequestManager } from 'src/app/@core/services/requestManager';
-import { VerificarFormulario } from 'src/app/@core/services/verificarFormulario';
-import { ImplicitAutenticationService } from 'src/app/@core/utils/implicit_autentication.service';
 import { environment } from 'src/environments/environment';
+import { ServiceCookies, ImplicitAutenticationService } from '@udistrital/planeacion-utilidades-module';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -89,16 +88,19 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   formSelect: FormGroup;
   pendienteCheck: boolean;
 
+  //Servicios Utilidades Module
+  private serviceCookies = new ServiceCookies();
+  private autenticationService = new ImplicitAutenticationService();
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
     private formBuilder: FormBuilder,
     private request: RequestManager,
-    private autenticationService: ImplicitAutenticationService,
+    // private autenticationService: ImplicitAutenticationService,
     private codigosService: CodigosService,
     private activatedRoute: ActivatedRoute,
-    private verificarFormulario: VerificarFormulario,
   ) {
     codigosService.cargarIdentificadores()
     this.loadPeriodos();
@@ -131,12 +133,12 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     await this.codigosService.cargarIdentificadores();
-    await this.autenticationService.getRoles().then((roles) => {
-      if (roles.find((x) => x == 'PLANEACION')) {
+    await this.autenticationService.getRoles().then((roles: any) => {
+      if (roles.find((x: any) => x == 'PLANEACION')) {
         this.rol = 'PLANEACION';
-      } else if (roles.find((x) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
+      } else if (roles.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
         this.rol = 'JEFE_DEPENDENCIA';
-      } else if (roles.find((x) => x == 'JEFE_UNIDAD_PLANEACION')) {
+      } else if (roles.find((x: any) => x == 'JEFE_UNIDAD_PLANEACION')) {
         this.rol = "JEFE_UNIDAD_PLANEACION";
       }
     });
@@ -147,9 +149,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       await this.validarUnidad()
       //await this.verificarFechas();
     }
-    const unidadCookie = this.verificarFormulario.getCookie("unidad");
-    const vigenciaCookie = this.verificarFormulario.getCookie("vigencia");
-    const planCookie = this.verificarFormulario.getCookie("plan");
+    const unidadCookie = this.serviceCookies.getCookie("unidad");
+    const vigenciaCookie = this.serviceCookies.getCookie("vigencia");
+    const planCookie = this.serviceCookies.getCookie("plan");
     if (unidadCookie != undefined || vigenciaCookie != undefined || planCookie != undefined) {
       this.pendienteCheck = true;
       this.onChangeU(JSON.parse(unidadCookie!));
@@ -180,13 +182,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    const unidadCookie = this.verificarFormulario.getCookie("unidad");
-    const vigenciaCookie = this.verificarFormulario.getCookie("vigencia");
-    const planCookie = this.verificarFormulario.getCookie("plan");
+    const unidadCookie = this.serviceCookies.getCookie("unidad");
+    const vigenciaCookie = this.serviceCookies.getCookie("vigencia");
+    const planCookie = this.serviceCookies.getCookie("plan");
     if (unidadCookie != undefined || vigenciaCookie != undefined || planCookie != undefined) {
-      this.verificarFormulario.deleteCookie("unidad");
-      this.verificarFormulario.deleteCookie("vigencia");
-      this.verificarFormulario.deleteCookie("plan");
+      this.serviceCookies.deleteCookie("unidad");
+      this.serviceCookies.deleteCookie("vigencia");
+      this.serviceCookies.deleteCookie("plan");
     }
   }
 
@@ -288,7 +290,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   async validarUnidad() {
     return await new Promise<Dependencia[]>((resolve, reject) => {
-      this.autenticationService.getDocumento().then((documento) => {
+      this.autenticationService.getDocumento().then((documento: any) => {
         this.request
           .get(
             environment.TERCEROS_SERVICE,
