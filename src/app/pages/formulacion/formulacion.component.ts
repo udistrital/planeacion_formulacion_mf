@@ -1743,12 +1743,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
             })
           }
         })
-        Swal.fire({
-          title: 'Revision Enviada (SIN CAMBIOS)',
-          icon: 'success',
-          showConfirmButton: false,
-          timer: 2500
-        })
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         Swal.fire({
           title: 'Envio de Pre Aval Cancelado',
@@ -1785,7 +1779,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           return new Promise((resolve, reject) => {
             this.request
               .post(
-                environment.PLANES_MID,
+                environment.PLANEACION_SEGUIMIENTO_MID,
                 `seguimiento/avalar/${this.plan._id}`,
                 {}
               )
@@ -1798,12 +1792,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                       icon: "success",
                       showConfirmButton: false,
                       timer: 2500,
+                    }).then(() => {
+                      this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoAval);
+                      this.busquedaPlanes(this.plan);
+                      this.loadData();
+                      this.addActividad = false;
+                      resolve(data);
                     });
-                    this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoAval);
-                    this.busquedaPlanes(this.plan);
-                    this.loadData();
-                    this.addActividad = false;
-                    resolve(data);
                   } else {
                     Swal.fire({
                       title: "Error en la operación",
@@ -1817,8 +1812,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                 },
                 (error) => {
                   Swal.close();
-                  const mensaje = error.error.Data
-                    ? error.error.Data
+                  const mensaje = error.error.Message
+                    ? error.error.Message.split(": ")[1]
                     : error.message;
                   Swal.fire({
                     title: "Error en la operación",
