@@ -1,0 +1,64 @@
+@use "../styles/global";
+
+table {
+  width: 100%;
+}
+
+th {
+  color: white;
+}
+
+th.mat-mdc-header-cell div {
+  margin-bottom: 10px;
+}
+
+tr td.mat-mdc-cell:last-child {
+  text-align: right;
+  justify-content: flex-end;
+}
+
+th input {
+  background-color: var(--color0);
+  color: var(--color3);
+  font-size: 10px;
+  padding: 5px;
+  width: calc(100% - 16px);
+  outline: none;
+  border: none;
+
+
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+input[type="number"] {
+  appearance: textfield;
+}
+
+td.mat-mdc-cell,
+th.mat-mdc-header-cell {
+  padding: 16px 10px;
+}
+
+tr th.mat-mdc-header-cell:last-child {
+  padding-right: 24px;
+  text-align: right;
+}
+
+th.mat-column-vigencia,
+th.mat-column-version {
+  width: 7%;
+}
+
+th.mat-column-dependencia,
+th.mat-column-nombre {
+  width: 25%;
+}
+
+th.mat-column-estado {
+  width: 12.5%;
+}
