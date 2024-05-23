@@ -225,7 +225,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       }
     });
-    if (!this.existePlan(this.planesInteresArray, plan.nombre)) {
+    if (!this.existePlan(this.planesInteresArray, plan._id)) {
       this.moduloVisible = true;
       Swal.close()
     } else {
@@ -429,8 +429,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     })
   }
 
-  existePlan(arreglo: (Plan | PlanInteres)[], nombre: string): boolean {
-    return arreglo.some((plan) => plan.nombre === nombre);
+  existePlan(arreglo: (Plan | PlanInteres)[], idPlan: string): boolean {
+    return arreglo.some((plan) => plan._id === idPlan);
   }
 
   async loadPlanesPeriodoSeguimiento() {
@@ -455,10 +455,10 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
                   // Recorre los planes en Interes y solo agrega los que no existian
                   planesInteresArray.forEach(plan => {
-                    if (!this.existePlan(this.planesInteresArray, plan.nombre)) {
+                    if (!this.existePlan(this.planesInteresArray, plan._id)) {
                       this.planesInteresArray = [...this.planesInteresArray, plan]
                     }
-                    if (!this.existePlan(this.planes, plan.nombre)) {
+                    if (!this.existePlan(this.planes, plan._id)) {
                       this.planes = [...this.planes, plan]
                     }
                   });
@@ -996,7 +996,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       },
     })
-    if (this.existePlan(this.planesInteresArray, plan.nombre)) {
+    if (this.existePlan(this.planesInteresArray, plan._id)) {
       this.banderaEstadoDatos = true;
       Swal.close();
       return Promise.resolve();
