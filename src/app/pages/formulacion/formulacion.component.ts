@@ -223,7 +223,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       }
     });
-    if (!this.existePlan(this.planesInteresArray, plan._id)) {
+    if (!this.existePlan(this.planesInteresArray, plan.nombre)) {
       this.moduloVisible = true;
       Swal.close()
     } else {
@@ -407,9 +407,15 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.request.get(environment.PLANES_CRUD, `plan?query=activo:true,dependencia_id:${this.unidad.Id},formato:false,vigencia:${this.vigencia.Id}`).subscribe(async (data: DataRequest) => {
         if (data) {
           // No se puede traer filtrado desde PLANES_CRUD, al parecer excede la cantidad de parametros
-          this.planes = (data.Data as Plan[]).filter(
+          let planes = (data.Data as Plan[]).filter(
             (p) => p.tipo_plan_id != this.codigosService.getId(TIPO.PlanProyecto)
           );
+          this.planes = []
+          planes.forEach(plan => {
+            if (!this.existePlan(this.planes, plan.nombre)){
+              this.planes = [...this.planes, plan]
+            }
+          });
           await this.loadPlanesPeriodoSeguimiento();
           resolve(this.planes);
         }
@@ -427,8 +433,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     })
   }
 
-  existePlan(arreglo: (Plan | PlanInteres)[], idPlan: string): boolean {
-    return arreglo.some((plan) => plan._id === idPlan);
+  existePlan(arreglo: (Plan | PlanInteres)[], nombre:string) :boolean {
+    return arreglo.some((plan) => plan.nombre === nombre);
   }
 
   async loadPlanesPeriodoSeguimiento() {
@@ -445,6 +451,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.request
         .post(environment.PLANES_CRUD, `periodo-seguimiento/buscar-unidad-planes/3`, periodo_seguimiento)
         .subscribe((data: DataRequest) => {
+          this.planesInteresArray = [];
           if (data?.Data != null && data.Data.length != 0) {
             data.Data.forEach((elemento: PeriodoSeguimiento) => {
               if (elemento.planes_interes) {
@@ -452,16 +459,19 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                   let planesInteresArray: PlanInteres[] = JSON.parse(elemento.planes_interes);
 
                   // Recorre los planes en Interes y solo agrega los que no existian
-                  planesInteresArray.forEach(plan => {
-                    if (!this.existePlan(this.planesInteresArray, plan._id)) {
-                      this.planesInteresArray = [...this.planesInteresArray, plan]
-                    }
-                    if (!this.existePlan(this.planes, plan._id)) {
-                      this.planes = [...this.planes, plan]
+                  planesInteresArray.forEach((plan) => {
+                    if (
+                      !this.existePlan(this.planesInteresArray, plan.nombre)
+                    ) {
+                      this.planesInteresArray = [
+                        ...this.planesInteresArray,
+                        plan,
+                      ];
+                      if(this.existePlan(this.planes, plan.nombre)){
+                        this.planes = this.planes.filter((p)=> p.nombre !== plan.nombre)
+                      }
                     }
                   });
-                  Swal.close();
-                  resolve(this.planes);
                 } catch (error) {
                   console.error(
                     "Error al analizar JSON en planes_interes:",
@@ -478,21 +488,23 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               }
             });
           }
+          this.planes = [...this.planes, ...this.planesInteresArray];
           Swal.close();
           if (this.planes.length == 0) {
             Swal.fire({
-              title: 'Planes no encontrados',
+              title: "Planes no encontrados",
               html:
-                'No tiene asignados planes/proyectos asociados para la dependencia <b>' +
+                "No tiene asignados planes/proyectos asociados para la dependencia <b>" +
                 this.unidad.Nombre +
-                '</b> y la <br> vigencia <b>' +
+                "</b> y la <br> vigencia <b>" +
                 this.vigencia.Nombre +
-                '</b><br></br>',
-              icon: 'warning',
+                "</b><br></br>",
+              icon: "warning",
               showConfirmButton: false,
               timer: 7000,
             });
           }
+          resolve(this.planes);
         });
     });
   }
@@ -994,7 +1006,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       },
     })
-    if (this.existePlan(this.planesInteresArray, plan._id)) {
+    if (this.existePlan(this.planesInteresArray, plan.nombre)) {
       this.banderaEstadoDatos = true;
       Swal.close();
       return Promise.resolve();
