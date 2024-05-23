@@ -98,7 +98,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   constructor(
     private formBuilder: FormBuilder,
     private request: RequestManager,
-    // private autenticationService: ImplicitAutenticationService,
     private codigosService: CodigosService,
     private activatedRoute: ActivatedRoute,
   ) {
@@ -155,7 +154,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     if (unidadCookie != undefined || vigenciaCookie != undefined || planCookie != undefined) {
       this.pendienteCheck = true;
       this.onChangeU(JSON.parse(unidadCookie!));
-      this.onChangeV(JSON.parse(vigenciaCookie!));
+      this.onChangeV(JSON.parse(vigenciaCookie!), this.pendienteCheck);
       this.onChangeP(JSON.parse(planCookie!));
     }
 
@@ -672,7 +671,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     return unidad.Id === 67 || (unidad.TipoDependencia as TipoDependencia).Id === 2 || unidad.TipoDependencia === 2
   }
 
-  async onChangeV(vigencia: Vigencia) {
+  async onChangeV(vigencia: Vigencia, planListo: boolean) {
     if (vigencia == undefined) {
       this.vigenciaSelected = false;
     } else {
@@ -684,7 +683,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.estadoPlan = "";
       this.iconEstado = "";
       this.versionPlan = "";
-      await this.loadPlanes();
+      if (!planListo) {
+        await this.loadPlanes();
+      }
       this.banderaEstadoDatos = false;
       this.planSelected = false;
       this.plan = {} as Plan;
@@ -1884,7 +1885,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       (vigencia) => vigencia.Id == Number(planACargar.vigencia_id)
     )!;
     this.formSelect.get('selectVigencia')!.setValue(vigencia);
-    await this.onChangeV(vigencia);
+    await this.onChangeV(vigencia, false);
 
     // En este punto se deben haber cargado los planes por la función 'onChangeV'
     if (this.planes != undefined) {
