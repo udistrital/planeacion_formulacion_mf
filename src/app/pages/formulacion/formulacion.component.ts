@@ -488,14 +488,14 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           Swal.close();
           if (this.planes.length == 0) {
             Swal.fire({
-              title: 'Planes no encontrados',
+              title: "Planes no encontrados",
               html:
-                'No tiene asignados planes/proyectos asociados para la dependencia <b>' +
+                "No tiene asignados planes/proyectos asociados para la dependencia <b>" +
                 this.unidad.Nombre +
-                '</b> y la <br> vigencia <b>' +
+                "</b> y la <br> vigencia <b>" +
                 this.vigencia.Nombre +
-                '</b><br></br>',
-              icon: 'warning',
+                "</b><br></br>",
+              icon: "warning",
               showConfirmButton: false,
               timer: 7000,
             });
