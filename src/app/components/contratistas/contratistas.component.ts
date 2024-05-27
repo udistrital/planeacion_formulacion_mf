@@ -142,7 +142,7 @@ export class ContratistasComponent implements OnInit {
       }
     }
 
-    if (this.rol == 'PLANEACION' || this.rol == 'JEFE_UNIDAD_PLANEACION') {
+    if (this.rol == 'PLANEACION') {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
         this.readonlyTable = true;
@@ -186,7 +186,7 @@ export class ContratistasComponent implements OnInit {
       }
     }
 
-    if (this.rol == 'PLANEACION' || this.rol == 'JEFE_UNIDAD_PLANEACION') {
+    if (this.rol == 'PLANEACION') {
       if (this.estadoPlan == 'En formulación') {
         return ['AccionesP', 'DescripcionNecesidadP', 'PerfilP', 'CantidadP', 'TiempoContrato', 'ValorUnitarioP', 'ValorUnitarioIncP', 'ValorTotalP', 'ValorTotalIncP', 'ActividadesP'];
       }
@@ -376,7 +376,7 @@ export class ContratistasComponent implements OnInit {
 
 
   addContratista() {
-    if (this.rol === 'PLANEACION' || this.rol === 'JEFE_UNIDAD_PLANEACION') {
+    if (this.rol === 'PLANEACION') {
       this.dataSource.data.unshift({
         descripcionNecesidad: '',
         perfil: '',
