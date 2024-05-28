@@ -4,7 +4,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { isNumeric } from 'rxjs/internal-compatibility';
-import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { DataRequest } from 'src/app/@core/models/dataRequest';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import Swal from 'sweetalert2';
 import { environment } from '../../../environments/environment';
