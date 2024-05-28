@@ -5,7 +5,7 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute } from '@angular/router';
 import { Actividad } from 'src/app/@core/models/actividad';
-import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { DataRequest } from 'src/app/@core/models/dataRequest';
 import { Dependencia, DependenciaTipoDependencia, TipoDependencia } from 'src/app/@core/models/dependencia';
 import { EstadoPlan } from 'src/app/@core/models/estadoPlan';
 import { Paso } from 'src/app/@core/models/formato';
@@ -15,9 +15,8 @@ import { InfoTercero, TerceroFormulacion } from 'src/app/@core/models/tercero';
 import { Vigencia } from 'src/app/@core/models/vigencia';
 import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { RequestManager } from 'src/app/@core/services/requestManager';
-import { VerificarFormulario } from 'src/app/@core/services/verificarFormulario';
-import { ImplicitAutenticationService } from 'src/app/@core/utils/implicit_autentication.service';
 import { environment } from 'src/environments/environment';
+import { ServiceCookies, ImplicitAutenticationService } from '@udistrital/planeacion-utilidades-module';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -89,16 +88,18 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   formSelect: FormGroup;
   pendienteCheck: boolean;
 
+  //Servicios Utilidades Module
+  private serviceCookies = new ServiceCookies();
+  private autenticationService = new ImplicitAutenticationService();
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
     private formBuilder: FormBuilder,
     private request: RequestManager,
-    private autenticationService: ImplicitAutenticationService,
     private codigosService: CodigosService,
     private activatedRoute: ActivatedRoute,
-    private verificarFormulario: VerificarFormulario,
   ) {
     codigosService.cargarIdentificadores()
     this.loadPeriodos();
@@ -132,11 +133,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     await this.codigosService.cargarIdentificadores();
-    await this.autenticationService.getRoles().then((roles) => {
-      if (roles.find((x) => x == 'PLANEACION')) {
+    await this.autenticationService.getRoles().then((roles: any) => {
+      if (roles.find((x: any) => x == 'PLANEACION')) {
         this.rol = 'PLANEACION';
-      } else if (roles.find((x) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
+      } else if (roles.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
         this.rol = 'JEFE_DEPENDENCIA';
+      else if (roles.find((x: any) => x == 'JEFE_UNIDAD_PLANEACION')) {
+        this.rol = "JEFE_UNIDAD_PLANEACION";
       }
     });
 
@@ -146,13 +149,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       await this.validarUnidad()
       //await this.verificarFechas();
     }
-    const unidadCookie = this.verificarFormulario.getCookie("unidad");
-    const vigenciaCookie = this.verificarFormulario.getCookie("vigencia");
-    const planCookie = this.verificarFormulario.getCookie("plan");
+    const unidadCookie = this.serviceCookies.getCookie("unidad");
+    const vigenciaCookie = this.serviceCookies.getCookie("vigencia");
+    const planCookie = this.serviceCookies.getCookie("plan");
     if (unidadCookie != undefined || vigenciaCookie != undefined || planCookie != undefined) {
       this.pendienteCheck = true;
       this.onChangeU(JSON.parse(unidadCookie!));
-      this.onChangeV(JSON.parse(vigenciaCookie!));
+      this.onChangeV(JSON.parse(vigenciaCookie!), this.pendienteCheck);
       this.onChangeP(JSON.parse(planCookie!));
     }
 
@@ -179,13 +182,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy() {
-    const unidadCookie = this.verificarFormulario.getCookie("unidad");
-    const vigenciaCookie = this.verificarFormulario.getCookie("vigencia");
-    const planCookie = this.verificarFormulario.getCookie("plan");
+    const unidadCookie = this.serviceCookies.getCookie("unidad");
+    const vigenciaCookie = this.serviceCookies.getCookie("vigencia");
+    const planCookie = this.serviceCookies.getCookie("plan");
     if (unidadCookie != undefined || vigenciaCookie != undefined || planCookie != undefined) {
-      this.verificarFormulario.deleteCookie("unidad");
-      this.verificarFormulario.deleteCookie("vigencia");
-      this.verificarFormulario.deleteCookie("plan");
+      this.serviceCookies.deleteCookie("unidad");
+      this.serviceCookies.deleteCookie("vigencia");
+      this.serviceCookies.deleteCookie("plan");
     }
   }
 
@@ -222,7 +225,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       }
     });
-    if (!this.existePlan(this.planesInteresArray, plan._id)) {
+    if (!this.existePlan(this.planesInteresArray, plan.nombre)) {
       this.moduloVisible = true;
       Swal.close()
     } else {
@@ -287,7 +290,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   async validarUnidad() {
     return await new Promise<Dependencia[]>((resolve, reject) => {
-      this.autenticationService.getDocumento().then((documento) => {
+      this.autenticationService.getDocumento().then((documento: any) => {
         this.request
           .get(
             environment.TERCEROS_SERVICE,
@@ -406,9 +409,15 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.request.get(environment.PLANES_CRUD, `plan?query=activo:true,dependencia_id:${this.unidad.Id},formato:false,vigencia:${this.vigencia.Id}`).subscribe(async (data: DataRequest) => {
         if (data) {
           // No se puede traer filtrado desde PLANES_CRUD, al parecer excede la cantidad de parametros
-          this.planes = (data.Data as Plan[]).filter(
+          let planes = (data.Data as Plan[]).filter(
             (p) => p.tipo_plan_id != this.codigosService.getId(TIPO.PlanProyecto)
           );
+          this.planes = []
+          planes.forEach(plan => {
+            if (!this.existePlan(this.planes, plan.nombre)) {
+              this.planes = [...this.planes, plan]
+            }
+          });
           await this.loadPlanesPeriodoSeguimiento();
           resolve(this.planes);
         }
@@ -426,8 +435,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     })
   }
 
-  existePlan(arreglo: (Plan | PlanInteres)[], idPlan: string): boolean {
-    return arreglo.some((plan) => plan._id === idPlan);
+  existePlan(arreglo: (Plan | PlanInteres)[], nombre: string): boolean {
+    return arreglo.some((plan) => plan.nombre === nombre);
   }
 
   async loadPlanesPeriodoSeguimiento() {
@@ -444,6 +453,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.request
         .post(environment.PLANES_CRUD, `periodo-seguimiento/buscar-unidad-planes/3`, periodo_seguimiento)
         .subscribe((data: DataRequest) => {
+          this.planesInteresArray = [];
           if (data?.Data != null && data.Data.length != 0) {
             data.Data.forEach((elemento: PeriodoSeguimiento) => {
               if (elemento.planes_interes) {
@@ -452,15 +462,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
                   // Recorre los planes en Interes y solo agrega los que no existian
                   planesInteresArray.forEach(plan => {
-                    if (!this.existePlan(this.planesInteresArray, plan._id)) {
+                    if (!this.existePlan(this.planesInteresArray, plan.nombre)) {
                       this.planesInteresArray = [...this.planesInteresArray, plan]
-                    }
-                    if (!this.existePlan(this.planes, plan._id)) {
-                      this.planes = [...this.planes, plan]
+                      if (this.existePlan(this.planes, plan.nombre)) {
+                        this.planes = this.planes.filter((p) => p.nombre !== plan.nombre)
+                      }
                     }
                   });
-                  Swal.close();
-                  resolve(this.planes);
                 } catch (error) {
                   console.error(
                     "Error al analizar JSON en planes_interes:",
@@ -477,21 +485,23 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               }
             });
           }
+          this.planes = [...this.planes, ...this.planesInteresArray];
           Swal.close();
           if (this.planes.length == 0) {
             Swal.fire({
-              title: 'Planes no encontrados',
+              title: "Planes no encontrados",
               html:
-                'No tiene asignados planes/proyectos asociados para la dependencia <b>' +
+                "No tiene asignados planes/proyectos asociados para la dependencia <b>" +
                 this.unidad.Nombre +
-                '</b> y la <br> vigencia <b>' +
+                "</b> y la <br> vigencia <b>" +
                 this.vigencia.Nombre +
-                '</b><br></br>',
-              icon: 'warning',
+                "</b><br></br>",
+              icon: "warning",
               showConfirmButton: false,
               timer: 7000,
             });
           }
+          resolve(this.planes);
         });
     });
   }
@@ -662,7 +672,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     return unidad.Id === 67 || (unidad.TipoDependencia as TipoDependencia).Id === 2 || unidad.TipoDependencia === 2
   }
 
-  async onChangeV(vigencia: Vigencia) {
+  async onChangeV(vigencia: Vigencia, planListo: boolean) {
     if (vigencia == undefined) {
       this.vigenciaSelected = false;
     } else {
@@ -674,7 +684,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.estadoPlan = "";
       this.iconEstado = "";
       this.versionPlan = "";
-      await this.loadPlanes();
+      if (!planListo) {
+        await this.loadPlanes();
+      }
       this.banderaEstadoDatos = false;
       this.planSelected = false;
       this.plan = {} as Plan;
@@ -993,7 +1005,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       },
     })
-    if (this.existePlan(this.planesInteresArray, plan._id)) {
+    if (this.existePlan(this.planesInteresArray, plan.nombre)) {
       this.banderaEstadoDatos = true;
       Swal.close();
       return Promise.resolve();
@@ -1885,7 +1897,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       (vigencia) => vigencia.Id == Number(planACargar.vigencia_id)
     )!;
     this.formSelect.get('selectVigencia')!.setValue(vigencia);
-    await this.onChangeV(vigencia);
+    await this.onChangeV(vigencia, false);
 
     // En este punto se deben haber cargado los planes por la función 'onChangeV'
     if (this.planes != undefined) {
