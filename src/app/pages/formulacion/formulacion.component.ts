@@ -136,18 +136,17 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     await this.autenticationService.getRoles().then((roles: any) => {
       if (roles.find((x: any) => x == 'PLANEACION')) {
         this.rol = 'PLANEACION';
+      } else if (roles.find((x: any) => x == 'ASISTENTE_PLANEACION')) {
+        this.rol = "ASISTENTE_PLANEACION";
       } else if (roles.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
         this.rol = 'JEFE_DEPENDENCIA';
-      else if (roles.find((x: any) => x == 'JEFE_UNIDAD_PLANEACION')) {
-        this.rol = "JEFE_UNIDAD_PLANEACION";
       }
     });
 
-    if (this.rol == 'PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       await this.loadUnidades();
     } else if (this.rol == 'JEFE_DEPENDENCIA') {
       await this.validarUnidad()
-      //await this.verificarFechas();
     }
     const unidadCookie = this.serviceCookies.getCookie("unidad");
     const vigenciaCookie = this.serviceCookies.getCookie("vigencia");
@@ -781,7 +780,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         this.hiddenObs = true;
       }
     }
-    if (this.rol == 'PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       if (this.estadoPlan == 'En formulación') {
         this.readOnlyAll = true;
         this.readonlyObs = true;
@@ -994,7 +993,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     })
   }
 
-  cargaFormato(plan: Plan) {
+  cargaFormato(plan: Plan, banderaActividad: boolean = false) {
     Swal.fire({
       title: 'Cargando formato',
       timerProgressBar: true,
@@ -1005,7 +1004,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       },
     })
-    if (this.existePlan(this.planesInteresArray, plan.nombre)) {
+    if (this.existePlan(this.planesInteresArray, plan.nombre) && !banderaActividad) {
       this.banderaEstadoDatos = true;
       Swal.close();
       return Promise.resolve();
@@ -1178,7 +1177,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     if (this.tipoPlanIndicativo === undefined && this.idPlanIndicativo === undefined) {
       this.cargarPlanesIndicativos();
     }
-    this.cargaFormato(this.plan);
+    this.cargaFormato(this.plan, true);
     this.addActividad = true;
     this.banderaEdit = false;
     this.visualizeObs();

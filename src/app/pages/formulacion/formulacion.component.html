@@ -409,13 +409,13 @@
             Culminar plan
           </button>
         </ng-container>
-        <ng-container *ngIf="rol == 'PLANEACION'">
+        <ng-container *ngIf="rol == 'PLANEACION' || rol == 'ASISTENTE_PLANEACION'">
           <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3aeb01c7a245952fabff'" mat-raised-button
             color="primary" style="color:white;" (click)="iniciarRevision()" [disabled]="!dataT">
             Iniciar Revisión
           </button>
         </ng-container>
-        <ng-container *ngIf="rol == 'PLANEACION'">
+        <ng-container *ngIf="rol == 'PLANEACION' || rol == 'ASISTENTE_PLANEACION'">
           <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3b0301c7a2a44e2fac01'" mat-raised-button
             color="primary" style="color:white;" (click)="enviarRevision()" [disabled]="!dataT">
             Enviar Revisión
@@ -440,7 +440,7 @@
             Dar Pre-Aval
           </button>
         </ng-container>
-        <ng-container *ngIf="rol == 'PLANEACION'">
+        <ng-container *ngIf="rol == 'PLANEACION' || rol == 'ASISTENTE_PLANEACION'">
           <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3b4401c7a222052fac05'" mat-raised-button
             color="primary" style="color:white;" (click)="realizarAjustes()" [disabled]="!dataT">
             Remitir Ajuste Plan de Acción
