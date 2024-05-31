@@ -138,14 +138,16 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         this.rol = 'PLANEACION';
       } else if (roles.find((x: any) => x == 'ASISTENTE_PLANEACION')) {
         this.rol = "ASISTENTE_PLANEACION";
-      } else if (roles.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
+      } else if (roles.find((x: any) => x == 'JEFE_DEPENDENCIA')) {
         this.rol = 'JEFE_DEPENDENCIA';
+      } else if (roles.find((x: any) => x == 'ASISTENTE_DEPENDENCIA')) {
+        this.rol = 'ASISTENTE_DEPENDENCIA';
       }
     });
 
     if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       await this.loadUnidades();
-    } else if (this.rol == 'JEFE_DEPENDENCIA') {
+    } else if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       await this.validarUnidad()
     }
     const unidadCookie = this.serviceCookies.getCookie("unidad");
@@ -533,6 +535,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   submit() {
+    this.SwalCargando();
     if (!this.banderaEdit) { // ADD NUEVA ACTIVIDAD
       if (this.dataArmonizacionPED.length != 0 && this.dataArmonizacionPI.length != 0) {
 
@@ -757,7 +760,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
 
   visualizeObs() {
-    if (this.rol == 'JEFE_DEPENDENCIA') {
+    if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       if (this.estadoPlan == 'En formulación') {
         if (this.versiones.length == 1) {
           this.hiddenObs = true;
@@ -945,7 +948,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   ajustarData(planRecienCreado: boolean) {
     if (this.rol == 'PLANEACION' || this.plan.estado_plan_id != this.codigosService.getId(TIPO.EstadoEnFormulacion)) {
       this.iconEditar = 'search'
-    } else if (this.rol == 'JEFE_DEPENDENCIA') {
+    } else if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       this.iconEditar = 'edit'
     }
     this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/actividad/${this.plan._id}?order=asc&sortby=index`).subscribe((data: DataRequest) => {
@@ -1649,7 +1652,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
             showCancelButton: true
           }).then((result) => {
             if (result.isConfirmed) {
-              this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoEnRevision);
+              this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoRevisionVerificada);
               this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id)
                 .subscribe((data: DataRequest) => {
                   if (data) {
@@ -1704,6 +1707,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
+        this.SwalCargando();
         this.request.post(environment.PLANEACION_FORMULACION_MID, `formulacion/plan/${this.plan._id}/versionar`, this.plan).subscribe((data: DataRequest) => {
           if (data) {
             this.getVersiones(data.Data);
@@ -1909,5 +1913,19 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     } else {
       console.error('No se han cargado los planes');
     }
+  }
+
+  SwalCargando() {
+    Swal.fire({
+      title: 'Cargando',
+      icon: 'info',
+      timerProgressBar: true,
+      showConfirmButton: false,
+      allowEscapeKey: false,
+      allowOutsideClick: false,
+      willOpen: () => {
+        Swal.showLoading();
+      },
+    });
   }
 }

@@ -67,7 +67,7 @@
 
 <br><br>
 <!-- TABLA RESUMEN -->
-<ng-container *ngIf="rol == 'PLANEACION' && !planAsignado">
+<ng-container *ngIf="(rol == 'PLANEACION' || rol == 'ASISTENTE_PLANEACION') && !planAsignado">
   <app-tabla-resumen (mostrarPlan)="cargarPlan($event)"></app-tabla-resumen>
 </ng-container>
 <!-- FORMULACIÓN -->
@@ -440,7 +440,7 @@
             Dar Pre-Aval
           </button>
         </ng-container>
-        <ng-container *ngIf="rol == 'PLANEACION' || rol == 'ASISTENTE_PLANEACION'">
+        <ng-container *ngIf="rol == 'PLANEACION'">
           <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3b4401c7a222052fac05'" mat-raised-button
             color="primary" style="color:white;" (click)="realizarAjustes()" [disabled]="!dataT">
             Remitir Ajuste Plan de Acción
