@@ -3,7 +3,7 @@ import { FormBuilder, FormControl, FormGroup } from '@angular/forms';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
-import { ActivatedRoute } from '@angular/router';
+import { ActivatedRoute, Router } from '@angular/router';
 import { Actividad } from 'src/app/@core/models/actividad';
 import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
 import { Dependencia, DependenciaTipoDependencia, TipoDependencia } from 'src/app/@core/models/dependencia';
@@ -95,6 +95,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   @ViewChild(MatSort) sort!: MatSort;
 
   constructor(
+    private router: Router,
     private formBuilder: FormBuilder,
     private request: RequestManager,
     private autenticationService: ImplicitAutenticationService,
@@ -169,8 +170,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       if (
         dependencia_id != undefined &&
         vigencia_id != undefined &&
-        nombre != undefined &&
-        version != undefined
+        nombre != undefined
       ) {
         await this.cargarPlan({
           dependencia_id,
@@ -180,6 +180,12 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         } as ResumenPlan);
       }
     });
+
+    // Obtener notificación
+    this.getNotificacion()
+    window.addEventListener("notificacion", () => {
+      this.getNotificacion()
+    })
   }
 
   ngOnDestroy() {
@@ -191,6 +197,20 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.verificarFormulario.deleteCookie("vigencia");
       this.verificarFormulario.deleteCookie("plan");
     }
+  }
+
+  getNotificacion(){
+    let storage = localStorage.getItem('notificacion')
+    if(storage){
+      let notificacion = JSON.parse(storage)
+      localStorage.removeItem('notificacion')
+      this.loadNotificacion(notificacion)
+    }
+  }
+
+  async loadNotificacion(notificacion: any){
+    let data:any = await this.notificacionesService.loadNotificacion(notificacion)
+    this.router.navigate([`${data.id_unidad}/${data.nombre_plan}/${data.id_vigencia}`]);
   }
 
   applyFilter(event: Event) {
@@ -303,12 +323,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                 environment.PLANEACION_FORMULACION_MID,
                 `formulacion/tercero/${datosInfoTercero[0].TerceroId.Id}`
               )
-              .subscribe((vinculacion: DataRequest) => {
+              .subscribe(async (vinculacion: DataRequest) => {
                 if (vinculacion.Data != null) {
                   const vinculaciones: TerceroFormulacion[] = vinculacion.Data;
                   for (let aux = 0; aux < vinculaciones.length; aux++) {
                     const vinculacion = vinculaciones[aux];
-                    this.request
+                    await new Promise<Dependencia[]>((resolve, reject) => {
+                      this.request
                       .get(
                         environment.OIKOS_SERVICE,
                         `dependencia_tipo_dependencia?query=DependenciaId:${vinculacion.DependenciaId}`
@@ -329,8 +350,10 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                             this.auxUnidades.push(unidad);
                           }
                           this.moduloVisible = true;
+                          resolve(this.unidades)
                         }
                       });
+                    })
                   }
                   this.unidades = this.unidades.sort((a, b) => (a.Id < b.Id ? -1 : 1));
                   resolve(this.unidades);
@@ -1920,7 +1943,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       )! as Plan;
       this.formSelect.get('selectPlan')!.setValue(plan);
       this.onChangeP(plan);
-      this.versionDesdeTabla = planACargar.version!;
+      if (planACargar.version) {
+        this.versionDesdeTabla = planACargar.version!;
+      }
     } else {
       console.error('No se han cargado los planes');
     }
