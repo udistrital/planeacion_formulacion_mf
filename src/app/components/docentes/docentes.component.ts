@@ -6,7 +6,7 @@ import { MatPaginator, PageEvent } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { isNumeric } from 'rxjs/internal-compatibility';
-import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { DataRequest } from 'src/app/@core/models/dataRequest';
 import { Plan } from 'src/app/@core/models/plan';
 import { Vigencia } from 'src/app/@core/models/vigencia';
 import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
@@ -549,7 +549,7 @@ export class DocentesComponent implements OnInit {
       }
     }
 
-    if (this.rol == 'PLANEACION' || this.rol == 'JEFE_UNIDAD_PLANEACION') {
+    if (this.rol == 'PLANEACION') {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
         this.readonlyTable = true;
@@ -599,7 +599,7 @@ export class DocentesComponent implements OnInit {
       }
     }
 
-    if (this.rol == 'PLANEACION' || this.rol == 'JEFE_UNIDAD_PLANEACION') {
+    if (this.rol == 'PLANEACION') {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
         this.readonlyTable = true;
