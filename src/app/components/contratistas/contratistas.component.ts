@@ -117,7 +117,7 @@ export class ContratistasComponent implements OnInit {
   }
 
   visualizarColumnas(): string[] {
-    if (this.rol == 'JEFE_DEPENDENCIA') {
+    if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
         this.mostrarObservaciones = this.verificarObservaciones();
@@ -142,7 +142,7 @@ export class ContratistasComponent implements OnInit {
       }
     }
 
-    if (this.rol == 'PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
         this.readonlyTable = true;
@@ -168,7 +168,7 @@ export class ContratistasComponent implements OnInit {
   }
 
   visualizarHeaders(): string[] {
-    if (this.rol == 'JEFE_DEPENDENCIA') {
+    if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       if (this.estadoPlan == 'En formulación') {
         if (this.mostrarObservaciones && !this.readonlyTable) {
           return ['AccionesP', 'DescripcionNecesidadP', 'PerfilP', 'CantidadP', 'TiempoContrato', 'ValorUnitarioP', 'ValorUnitarioIncP', 'ValorTotalP', 'ValorTotalIncP', 'ActividadesP', 'ObservacionesP'];
@@ -186,7 +186,7 @@ export class ContratistasComponent implements OnInit {
       }
     }
 
-    if (this.rol == 'PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       if (this.estadoPlan == 'En formulación') {
         return ['AccionesP', 'DescripcionNecesidadP', 'PerfilP', 'CantidadP', 'TiempoContrato', 'ValorUnitarioP', 'ValorUnitarioIncP', 'ValorTotalP', 'ValorTotalIncP', 'ActividadesP'];
       }

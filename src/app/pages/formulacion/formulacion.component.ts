@@ -142,18 +142,19 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     await this.autenticationService.getRoles().then((roles: any) => {
       if (roles.find((x: any) => x == 'PLANEACION')) {
         this.rol = 'PLANEACION';
-      } else if (roles.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
+      } else if (roles.find((x: any) => x == 'ASISTENTE_PLANEACION')) {
+        this.rol = "ASISTENTE_PLANEACION";
+      } else if (roles.find((x: any) => x == 'JEFE_DEPENDENCIA')) {
         this.rol = 'JEFE_DEPENDENCIA';
-      else if (roles.find((x: any) => x == 'JEFE_UNIDAD_PLANEACION')) {
-        this.rol = "JEFE_UNIDAD_PLANEACION";
+      } else if (roles.find((x: any) => x == 'ASISTENTE_DEPENDENCIA')) {
+        this.rol = 'ASISTENTE_DEPENDENCIA';
       }
     });
 
-    if (this.rol == 'PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       await this.loadUnidades();
-    } else if (this.rol == 'JEFE_DEPENDENCIA') {
+    } else if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       await this.validarUnidad()
-      //await this.verificarFechas();
     }
     const unidadCookie = this.serviceCookies.getCookie("unidad");
     const vigenciaCookie = this.serviceCookies.getCookie("vigencia");
@@ -562,6 +563,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   submit() {
+    this.SwalCargando();
     if (!this.banderaEdit) { // ADD NUEVA ACTIVIDAD
       if (this.dataArmonizacionPED.length != 0 && this.dataArmonizacionPI.length != 0) {
 
@@ -786,7 +788,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
 
   visualizeObs() {
-    if (this.rol == 'JEFE_DEPENDENCIA') {
+    if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       if (this.estadoPlan == 'En formulación') {
         if (this.versiones.length == 1) {
           this.hiddenObs = true;
@@ -809,7 +811,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         this.hiddenObs = true;
       }
     }
-    if (this.rol == 'PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       if (this.estadoPlan == 'En formulación') {
         this.readOnlyAll = true;
         this.readonlyObs = true;
@@ -995,7 +997,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   ajustarData(planRecienCreado: boolean) {
     if (this.rol == 'PLANEACION' || this.plan.estado_plan_id != this.codigosService.getId(TIPO.EstadoEnFormulacion)) {
       this.iconEditar = 'search'
-    } else if (this.rol == 'JEFE_DEPENDENCIA') {
+    } else if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       this.iconEditar = 'edit'
     }
     this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/actividad/${this.plan._id}?order=asc&sortby=index`).subscribe((data: DataRequest) => {
@@ -1043,7 +1045,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     })
   }
 
-  cargaFormato(plan: Plan) {
+  cargaFormato(plan: Plan, banderaActividad: boolean = false) {
     Swal.fire({
       title: 'Cargando formato',
       timerProgressBar: true,
@@ -1054,7 +1056,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       },
     })
-    if (this.existePlan(this.planesInteresArray, plan.nombre)) {
+    if (this.existePlan(this.planesInteresArray, plan.nombre) && !banderaActividad) {
       this.banderaEstadoDatos = true;
       Swal.close();
       return Promise.resolve();
@@ -1227,7 +1229,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     if (this.tipoPlanIndicativo === undefined && this.idPlanIndicativo === undefined) {
       this.cargarPlanesIndicativos();
     }
-    this.cargaFormato(this.plan);
+    this.cargaFormato(this.plan, true);
     this.addActividad = true;
     this.banderaEdit = false;
     this.visualizeObs();
@@ -1702,7 +1704,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
             showCancelButton: true
           }).then((result) => {
             if (result.isConfirmed) {
-              this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoEnRevision);
+              this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoRevisionVerificada);
               this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id)
                 .subscribe((data: DataRequest) => {
                   if (data) {
@@ -1758,6 +1760,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
+        this.SwalCargando();
         this.request.post(environment.PLANEACION_FORMULACION_MID, `formulacion/plan/${this.plan._id}/versionar`, this.plan).subscribe((data: DataRequest) => {
           if (data) {
             if (this.estadoPlan == 'Revisado') {
@@ -1972,5 +1975,19 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     } else {
       console.error('No se han cargado los planes');
     }
+  }
+
+  SwalCargando() {
+    Swal.fire({
+      title: 'Cargando',
+      icon: 'info',
+      timerProgressBar: true,
+      showConfirmButton: false,
+      allowEscapeKey: false,
+      allowOutsideClick: false,
+      willOpen: () => {
+        Swal.showLoading();
+      },
+    });
   }
 }
