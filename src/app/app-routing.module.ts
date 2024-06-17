@@ -5,7 +5,18 @@ import { provideHttpClient, withFetch } from '@angular/common/http';
 import { FormulacionComponent } from './pages/formulacion/formulacion.component';
 import { getSingleSpaExtraProviders } from 'single-spa-angular';
 
-const routes: Routes = [{ path: '', component: FormulacionComponent }];
+const routes: Routes = [
+  { path: '', component: FormulacionComponent },
+  {
+    path: ':dependencia_id/:nombre/:vigencia_id',
+    component: FormulacionComponent,
+  },
+  {
+    path: ':dependencia_id/:nombre/:vigencia_id/:version',
+    component: FormulacionComponent,
+  },
+  { path: '**', redirectTo: '' },
+];
 
 @NgModule({
   imports: [RouterModule.forRoot(routes)],

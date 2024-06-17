@@ -29,7 +29,7 @@
       <ng-container *ngIf="unidadSelected">
         <mat-form-field appearance="fill" [style.width.%]="100">
           <mat-label id="tipo-input-label">Seleccione la Vigencia</mat-label>
-          <mat-select (selectionChange)="onChangeV($event.value)" formControlName="selectVigencia" hideSingleSelectionIndicator=true>
+          <mat-select (selectionChange)="onChangeV($event.value, false)" formControlName="selectVigencia" hideSingleSelectionIndicator=true>
             <mat-option>--</mat-option>
             <mat-option *ngFor="let vigencia of vigencias" [value]="vigencia">
               {{vigencia.Nombre}}
@@ -67,7 +67,7 @@
 
 <br><br>
 <!-- TABLA RESUMEN -->
-<ng-container *ngIf="rol == 'PLANEACION' && !planAsignado">
+<ng-container *ngIf="(rol == 'PLANEACION' || rol == 'ASISTENTE_PLANEACION') && !planAsignado">
   <app-tabla-resumen (mostrarPlan)="cargarPlan($event)"></app-tabla-resumen>
 </ng-container>
 <!-- FORMULACIÓN -->
@@ -376,7 +376,7 @@
         por la oficina de planeación, y no podrá realizar modificaciones hasta que sea retornado con observaciones
       </u>
     </mat-card-content>
-    <mat-card-content *ngIf="rol == 'JEFE_DEPENDENCIA' || rol == 'ASISTENTE_DEPENDENCIA'">
+    <mat-card-content *ngIf="rol == 'JEFE_DEPENDENCIA'">
       <u class="textGuide"
         *ngIf="plan.estado_plan_id === '614d3b1e01c7a265372fac03' || plan.estado_plan_id === '615335c501c7a213a12fb2a3'">
         Para iniciar el ajuste del plan por favor seleccione el botón REALIZAR AJUSTE, ubicado en la parte inferior de
@@ -409,25 +409,25 @@
             Culminar plan
           </button>
         </ng-container>
-        <ng-container *ngIf="rol == 'PLANEACION' || rol == 'JEFE_UNIDAD_PLANEACION'">
+        <ng-container *ngIf="rol == 'PLANEACION' || rol == 'ASISTENTE_PLANEACION'">
           <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3aeb01c7a245952fabff'" mat-raised-button
             color="primary" style="color:white;" (click)="iniciarRevision()" [disabled]="!dataT">
             Iniciar Revisión
           </button>
         </ng-container>
-        <ng-container *ngIf="rol == 'PLANEACION' || rol == 'JEFE_UNIDAD_PLANEACION'">
+        <ng-container *ngIf="rol == 'PLANEACION' || rol == 'ASISTENTE_PLANEACION'">
           <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3b0301c7a2a44e2fac01'" mat-raised-button
             color="primary" style="color:white;" (click)="enviarRevision()" [disabled]="!dataT">
             Enviar Revisión
           </button>
         </ng-container>
-        <ng-container *ngIf="rol == 'JEFE_UNIDAD_PLANEACION'">
+        <ng-container *ngIf="rol == 'JEFE_DEPENDENCIA'">
           <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3b1e01c7a265372fac03'" mat-raised-button
             color="primary" style="color:white;" (click)="verificarRevision()" [disabled]="!dataT"> <!--AGREGAR ID-->
             Verificar Revisión
           </button>
         </ng-container>
-        <ng-container *ngIf="rol == 'JEFE_DEPENDENCIA' || rol == 'ASISTENTE_DEPENDENCIA'">
+        <ng-container *ngIf="rol == 'JEFE_DEPENDENCIA'">
           <button class="btn-formulacion"
             *ngIf="plan.estado_plan_id === '614d3b1e01c7a265372fac03' || plan.estado_plan_id === '615335c501c7a213a12fb2a3'"
             mat-raised-button color="primary" style="color:white;" (click)="realizarAjustes()" [disabled]="!dataT">
@@ -446,7 +446,7 @@
             Remitir Ajuste Plan de Acción
           </button>
         </ng-container>
-        <ng-container *ngIf="rol == 'PLANEACION' || rol == 'JEFE_UNIDAD_PLANEACION'">
+        <ng-container *ngIf="rol == 'PLANEACION'">
           <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3b4401c7a222052fac05'" mat-raised-button
             color="primary" style="color:white;" (click)="avalar()" [disabled]="!dataT">
             Dar Aval

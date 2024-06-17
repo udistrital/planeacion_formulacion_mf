@@ -1,7 +1,6 @@
 import { Injectable } from "@angular/core";
 import { environment } from "src/environments/environment";
 import { DataRequest } from "../models/dataRequest";
-import { Tipo } from "../models/tipo";
 import { RequestManager } from "./requestManager";
 
 export enum TIPO {
@@ -46,7 +45,7 @@ export class CodigosService {
   ];
   private codigos: string[] = [];
 
-  private constructor(private request: RequestManager) {}
+  private constructor(private request: RequestManager) { }
 
   public async cargarIdentificadores() {
     const promesas = this.CONSULTAS.map(async (abr, pos) => {

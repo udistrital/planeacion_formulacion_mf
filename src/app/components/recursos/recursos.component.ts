@@ -4,7 +4,7 @@ import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { isNumeric } from 'rxjs/internal-compatibility';
-import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
+import { DataRequest } from 'src/app/@core/models/dataRequest';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import Swal from 'sweetalert2';
 import { environment } from '../../../environments/environment';
@@ -115,7 +115,7 @@ export class RecursosComponent implements OnInit {
       }
     }
 
-    if (this.rol == 'PLANEACION' || this.rol == 'JEFE_UNIDAD_PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
         this.readonlyTable = true;
@@ -221,7 +221,7 @@ export class RecursosComponent implements OnInit {
   }
 
   addElement() {
-    if (this.rol == 'PLANEACION' || this.rol == 'JEFE_UNIDAD_PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       this.dataSource.data.unshift({
         codigo: '',
         Nombre: '',

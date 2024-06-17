@@ -11,6 +11,7 @@ export const environment = {
     PLANEACION_FORMATO_MID: 'https://autenticacion.portaloas.udistrital.edu.co/apioas/planeacion_formato_mid/v1/',
     PLANEACION_ARBOL_MID: 'https://autenticacion.portaloas.udistrital.edu.co/apioas/planeacion_arbol_mid/v1/',
     PLANEACION_FORMULACION_MID: 'https://autenticacion.portaloas.udistrital.edu.co/apioas/planeacion_formulacion_mid/v1/',PLANES_MID: 'https://autenticacion.portaloas.udistrital.edu.co/apioas/planeacion_mid/v1/',
+    PLANEACION_SEGUIMIENTO_MID: 'http://pruebasapi3.intranetoas.udistrital.edu.co:8558/v1/',
     PLANES_MID_PROXY: 'https://autenticacion.portaloas.udistrital.edu.co/go_api/planeacion_mid/v1/',
     PLANES_CRUD: 'https://autenticacion.portaloas.udistrital.edu.co/apioas/planes_crud/',
     OIKOS_SERVICE: 'https://autenticacion.portaloas.udistrital.edu.co/apioas/oikos_crud_api/v2/',
@@ -23,9 +24,11 @@ export const environment = {
     //PARAMETROS_SERVICE: 'https://autenticacion.portaloas.udistrital.edu.co/apioas/parametros/v1/',
     CONFIGURACION_SERVICE: 'https://autenticacion.portaloas.udistrital.edu.co/apioas/configuracion_crud_api/v1/',
     CONF_MENU_SERVICE: 'https://autenticacion.portaloas.udistrital.edu.co/apioas/configuracion_crud_api/v1/menu_opcion_padre/ArbolMenus/',
-    NOTIFICACION_SERVICE: 'wss://pruebasapi.portaloas.udistrital.edu.co:8116/ws',
+    
+    // Notificaciones
     NOTIFICACION_MID_SERVICE: "https://autenticacion.portaloas.udistrital.edu.co/apioas/notificacion_mid/v1/",
-    ARM_AWS_NOTIFICACIONES:"arn:aws:sns:us-east-1:699001025740:test-Cumplidos",
+    ARN_TOPIC_NOTIFICACIONES: "arn:aws:sns:us-east-1:699001025740:test-Planeacion_pruebas.fifo",
+    
     TOKEN: {
         AUTORIZATION_URL: 'https://autenticacion.portaloas.udistrital.edu.co/oauth2/authorize',
         CLIENTE_ID: 'YN4iI_fMZvdOe1EhAaxHLdQonYsa',
