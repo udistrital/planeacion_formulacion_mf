@@ -2,19 +2,19 @@ import { Injectable } from '@angular/core';
 import { Router } from '@angular/router';
 import { environment } from 'src/environments/environment';
 import { RequestManager } from './requestManager';
-import { ImplicitAutenticationService } from '../utils/implicit_autentication.service';
+import { ImplicitAutenticationService } from '@udistrital/planeacion-utilidades-module';
 
 @Injectable({
   providedIn: 'root',
 })
 export class Notificaciones {
   private arm = environment.ARN_TOPIC_NOTIFICACIONES;
+  private autenticationService = new ImplicitAutenticationService();
 
   constructor(
     private router: Router,
     private request: RequestManager,
-    private autenticationService: ImplicitAutenticationService
-  ) {}
+  ) { }
 
   // Lista de mensajes
   // El prefijo pertenece al modulo (F:Formulacion/S:Seguimiento)
@@ -87,12 +87,12 @@ export class Notificaciones {
     {
       "codigo": "SERJU1",
       "mensaje": "El jefe de [NOMBRE UNIDAD] ha finalizado la revisión rechazando el seguimiento del plan [NOMBRE PLAN] de la vigencia [VIGENCIA] en el trimestre [TRIMESTRE]. El plan se encuentra en estado Revisión Verificada con Observaciones.",
-      "destinatarios":  ["asistente unidad", "asistente planeacion"],
+      "destinatarios": ["asistente unidad", "asistente planeacion"],
     },
     {
       "codigo": "SERJU2",
       "mensaje": "El jefe de [NOMBRE UNIDAD] ha finalizado la revisión aceptando el seguimiento del plan [NOMBRE PLAN] de la vigencia [VIGENCIA] en el trimestre [TRIMESTRE]. El plan se encuentra en estado Revisión Verificada.",
-      "destinatarios":  ["asistente unidad", "asistente planeacion", "jefe planeacion"],
+      "destinatarios": ["asistente unidad", "asistente planeacion", "jefe planeacion"],
     },
     {
       "codigo": "SRVCO",
@@ -121,45 +121,45 @@ export class Notificaciones {
     }
   ]
 
-  async enviarNotificacion(datosMensaje: any) {    
+  async enviarNotificacion(datosMensaje: any) {
     // Obtener notificación de lista (notificaciones) por código de abreviación
-    const notificacion:any = this.notificaciones.find(
+    const notificacion: any = this.notificaciones.find(
       objeto => objeto.codigo === datosMensaje.codigo
     );
-    
+
     let codigosAbreviacion: string[] = [];
-    if (notificacion.destinatarios.some((str:any) => str.includes("jefe"))) {
+    if (notificacion.destinatarios.some((str: any) => str.includes("jefe"))) {
       codigosAbreviacion.push("JO");
-    } 
-    if (notificacion.destinatarios.some((str:any) => str.includes("asistente"))) {
+    }
+    if (notificacion.destinatarios.some((str: any) => str.includes("asistente"))) {
       codigosAbreviacion.push("AS_D", "NR");
     }
-    
+
     try {
-      const cargos:any = await this.getCargos(codigosAbreviacion.join("|"))
-      let idsCargos = cargos.Data.map((cargo:any) => cargo.Id).join("|");
+      const cargos: any = await this.getCargos(codigosAbreviacion.join("|"))
+      let idsCargos = cargos.Data.map((cargo: any) => cargo.Id).join("|");
 
       // Obtener el id de la vigencia si no está en los datos del mensaje 
       let dependencias: string
       if (datosMensaje.id_unidad) {
         dependencias = datosMensaje.id_unidad.toString()
       } else {
-        const id_unidad =  await this.getIdUnidad(datosMensaje.nombre_unidad)
+        const id_unidad = await this.getIdUnidad(datosMensaje.nombre_unidad)
         dependencias = id_unidad.toString()
       }
 
       // Añadir dependencia de planeación si aplica
-      if (notificacion.destinatarios.some((str:any) => str.includes("planeacion"))) {
+      if (notificacion.destinatarios.some((str: any) => str.includes("planeacion"))) {
         dependencias += "|11" // Id dependencia planeacion
       }
 
-      const usuarios:any = await this.getUsuarios(dependencias, idsCargos)
-      
+      const usuarios: any = await this.getUsuarios(dependencias, idsCargos)
+
       let documentos: string[] = [];
       for (let i = 0; i < usuarios.length; i++) {
         const usuario = usuarios[i];
         if (Object.keys(usuario).length > 0 && usuario.TerceroPrincipalId.Id) {
-          const docUsuario:any = await this.getDocUsuario(usuario.TerceroPrincipalId.Id)
+          const docUsuario: any = await this.getDocUsuario(usuario.TerceroPrincipalId.Id)
           let doc = docUsuario[0]
           if (Object.keys(doc).length > 0 && typeof doc.Numero === "string" && doc.Numero !== "") {
             documentos.push(doc.Numero)
@@ -184,7 +184,7 @@ export class Notificaciones {
         );
     });
   }
-  
+
   // Obtener los usuarios filtrados por dependencia y cargo
   async getUsuarios(dependencias: string, idsCargos: string) {
     return await new Promise((resolve, reject) => {
@@ -208,25 +208,25 @@ export class Notificaciones {
   }
 
   // Recrear los id de las colas (destinatarios)
-  getIdsColas(rolesRemitentes: string[]) : string[] {
+  getIdsColas(rolesRemitentes: string[]): string[] {
     let idsColas = rolesRemitentes.map(rol => {
       let palabras = rol.split(' ');
       let nombreCola = palabras.map(nombre => nombre.charAt(0).toUpperCase() + nombre.slice(1));
-      let id = environment.entorno == 'test' ? "idcola" : "id" ;
+      let id = environment.entorno == 'test' ? "idcola" : "id";
       return id + nombreCola.join('');
     });
     return idsColas
   }
 
   // Convertir un objeto JSON en una cadena de texto con formato personalizado
-  getTextoDeJson(jsonData:any) {
+  getTextoDeJson(jsonData: any) {
     return Object.entries(jsonData).map(([key, value]) => `${key}:${value}`).join(",");
   }
 
   // Convertir la cadena de texto con formato personalizado en un objeto JSON
-  getJsonDeTexto(texto:string) {
+  getJsonDeTexto(texto: string) {
     const partes = texto.split(',');
-    const objeto:any = {};
+    const objeto: any = {};
     partes.forEach(part => {
       const [key, value] = part.split(':');
       objeto[key] = value;
@@ -235,7 +235,7 @@ export class Notificaciones {
   }
 
   // Constuir el body del mensaje(notificación)
-  getBodyMensaje(notificacion:any, datosMensaje:any, documentos:string[]) {
+  getBodyMensaje(notificacion: any, datosMensaje: any, documentos: string[]) {
     const cod_modulo = datosMensaje.codigo[0]
     const nombre_unidad = datosMensaje.nombre_unidad
     const nombre_plan = datosMensaje.nombre_plan
@@ -243,7 +243,7 @@ export class Notificaciones {
 
     //Modificar el mensaje
     let mensaje = notificacion.mensaje;
-    const reemplazos:any = {
+    const reemplazos: any = {
       "[NOMBRE UNIDAD]": nombre_unidad,
       "[NOMBRE PLAN]": nombre_plan,
       "[VIGENCIA]": nombre_vigencia
@@ -264,7 +264,7 @@ export class Notificaciones {
     var docUsuarioAuth: any = this.autenticationService.getDocumento();
 
     // Construir data del sistema (información necesaria para planeacion_cliente)
-    const jsonSistema:any = {
+    const jsonSistema: any = {
       modulo: cod_modulo == "F" ? "formulacion" : "seguimiento",
       nombre_unidad,
       nombre_plan,
@@ -306,7 +306,7 @@ export class Notificaciones {
 
   // Obtener id de la unidad por nombre
   async getIdUnidad(nombre_unidad: string) {
-    const unidad:any = await new Promise((resolve, reject) => {
+    const unidad: any = await new Promise((resolve, reject) => {
       this.request.get(environment.OIKOS_SERVICE, `dependencia?query=Nombre:${nombre_unidad}`)
         .subscribe(
           (data: any) => resolve(data),
@@ -318,7 +318,7 @@ export class Notificaciones {
 
   // Obtener el id de la vigencia por nombre
   async getIdVigencia(nombre_vigencia: string) {
-    const vigencia:any = await new Promise((resolve, reject) => {
+    const vigencia: any = await new Promise((resolve, reject) => {
       this.request.get(environment.PARAMETROS_SERVICE, `periodo?query=CodigoAbreviacion:VG,Nombre:${nombre_vigencia},activo:true`)
         .subscribe(
           (data: any) => resolve(data),
@@ -329,8 +329,8 @@ export class Notificaciones {
   }
 
   // Obtener id del plan por nombre, unidad y vigencia
-  async getIdPlan(nombre_plan: string, dependencia_id: string, vigencia_id:string) {
-    const plan:any = await new Promise((resolve, reject) => {
+  async getIdPlan(nombre_plan: string, dependencia_id: string, vigencia_id: string) {
+    const plan: any = await new Promise((resolve, reject) => {
       this.request.get(environment.PLANES_CRUD, `plan?query=nombre:${nombre_plan},dependencia_id:${dependencia_id},vigencia:${vigencia_id},activo:true,formato:false`)
         .subscribe(
           (data: any) => resolve(data),
@@ -343,13 +343,13 @@ export class Notificaciones {
   // Regirigir al modulo (página del componente)
   async redirigir(notificacion: any) {
     const atributos = notificacion.Body.MessageAttributes
-    const dataSistema:any = this.getJsonDeTexto(atributos.Data.Value)
-    
+    const dataSistema: any = this.getJsonDeTexto(atributos.Data.Value)
+
     const modulo = dataSistema.modulo;
     const nombre_plan = dataSistema.nombre_plan
     const id_unidad = await this.getIdUnidad(dataSistema.nombre_unidad)
     const id_vigencia = await this.getIdVigencia(dataSistema.nombre_vigencia)
-    
+
     if (id_vigencia && id_unidad) {
       let url: string;
       if (modulo === "formulacion") {
@@ -366,18 +366,18 @@ export class Notificaciones {
   async loadNotificacion(notificacion: any) {
     const atributos = notificacion.Body.MessageAttributes
     const modulo = notificacion.Body.MessageAttributes.Url.Value
-    const dataSistema:any = this.getJsonDeTexto(atributos.Data.Value)
-    
+    const dataSistema: any = this.getJsonDeTexto(atributos.Data.Value)
+
     const nombre_plan = dataSistema.nombre_plan
     const id_unidad = await this.getIdUnidad(dataSistema.nombre_unidad)
     const id_vigencia = await this.getIdVigencia(dataSistema.nombre_vigencia)
-    
+
     if (id_vigencia && id_unidad) {
       if (modulo === "formulacion") {
-        return {nombre_plan, id_unidad, id_vigencia}
+        return { nombre_plan, id_unidad, id_vigencia }
       } else if (modulo == "seguimiento") {
         const plan_id = await this.getIdPlan(nombre_plan, id_unidad, id_vigencia)
-        return {plan_id, trimestre: dataSistema.trimestre}
+        return { plan_id, trimestre: dataSistema.trimestre }
       }
     }
     return null
