@@ -16,7 +16,6 @@ import { Vigencia } from 'src/app/@core/models/vigencia';
 import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import { Notificaciones } from 'src/app/@core/services/notificaciones';
-import { VerificarFormulario } from 'src/app/@core/services/verificarFormulario';
 import { environment } from 'src/environments/environment';
 import { ServiceCookies, ImplicitAutenticationService } from '@udistrital/planeacion-utilidades-module';
 import Swal from 'sweetalert2';
@@ -102,7 +101,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     private router: Router,
     private formBuilder: FormBuilder,
     private request: RequestManager,
-    private autenticationService: ImplicitAutenticationService,
     private notificacionesService: Notificaciones,
     private codigosService: CodigosService,
     private activatedRoute: ActivatedRoute,
@@ -204,17 +202,17 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     }
   }
 
-  getNotificacion(){
+  getNotificacion() {
     let storage = localStorage.getItem('notificacion')
-    if(storage){
+    if (storage) {
       let notificacion = JSON.parse(storage)
       localStorage.removeItem('notificacion')
       this.loadNotificacion(notificacion)
     }
   }
 
-  async loadNotificacion(notificacion: any){
-    let data:any = await this.notificacionesService.loadNotificacion(notificacion)
+  async loadNotificacion(notificacion: any) {
+    let data: any = await this.notificacionesService.loadNotificacion(notificacion)
     this.router.navigate([`${data.id_unidad}/${data.nombre_plan}/${data.id_vigencia}`]);
   }
 
@@ -335,29 +333,29 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                     const vinculacion = vinculaciones[aux];
                     await new Promise<Dependencia[]>((resolve, reject) => {
                       this.request
-                      .get(
-                        environment.OIKOS_SERVICE,
-                        `dependencia_tipo_dependencia?query=DependenciaId:${vinculacion.DependenciaId}`
-                      )
-                      .subscribe((dataUnidad: DependenciaTipoDependencia[]) => {
-                        if (dataUnidad) {
-                          let unidad = dataUnidad[0].DependenciaId;
-                          unidad.TipoDependencia =
-                            dataUnidad[0].TipoDependenciaId.Id;
-                          for (let i = 0; i < dataUnidad.length; i++) {
-                            if (dataUnidad[i].TipoDependenciaId.Id === 2) {
-                              unidad.TipoDependencia =
-                                dataUnidad[i].TipoDependenciaId.Id;
+                        .get(
+                          environment.OIKOS_SERVICE,
+                          `dependencia_tipo_dependencia?query=DependenciaId:${vinculacion.DependenciaId}`
+                        )
+                        .subscribe((dataUnidad: DependenciaTipoDependencia[]) => {
+                          if (dataUnidad) {
+                            let unidad = dataUnidad[0].DependenciaId;
+                            unidad.TipoDependencia =
+                              dataUnidad[0].TipoDependenciaId.Id;
+                            for (let i = 0; i < dataUnidad.length; i++) {
+                              if (dataUnidad[i].TipoDependenciaId.Id === 2) {
+                                unidad.TipoDependencia =
+                                  dataUnidad[i].TipoDependenciaId.Id;
+                              }
                             }
+                            if (!this.unidades.find((u) => u.Id === unidad.Id)) {
+                              this.unidades.push(unidad);
+                              this.auxUnidades.push(unidad);
+                            }
+                            this.moduloVisible = true;
+                            resolve(this.unidades)
                           }
-                          if (!this.unidades.find((u) => u.Id === unidad.Id)) {
-                            this.unidades.push(unidad);
-                            this.auxUnidades.push(unidad);
-                          }
-                          this.moduloVisible = true;
-                          resolve(this.unidades)
-                        }
-                      });
+                        });
                     })
                   }
                   this.unidades = this.unidades.sort((a, b) => (a.Id < b.Id ? -1 : 1));
@@ -835,13 +833,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     }
   }
 
-  enviarNotificacion(){
+  enviarNotificacion() {
     if (this.codigoNotificacion != "") {
       let datos = {
         codigo: this.codigoNotificacion,
         id_unidad: this.unidad.Id,
-        nombre_unidad: this.unidad.Nombre, 
-        nombre_plan:this.plan.nombre, 
+        nombre_unidad: this.unidad.Nombre,
+        nombre_plan: this.plan.nombre,
         nombre_vigencia: this.vigencia.Nombre
       }
       this.notificacionesService.enviarNotificacion(datos);
@@ -1694,59 +1692,59 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       cancelButtonText: `No`,
       showCancelButton: true,
     }).then((result) => {
-        if (result.isConfirmed) {
-          Swal.fire({
-            title: 'Verificar Revisión',
-            text: `¿Desea verificar la revisión?`,
-            icon: 'warning',
-            confirmButtonText: `Sí`,
-            cancelButtonText: `No`,
-            showCancelButton: true
-          }).then((result) => {
-            if (result.isConfirmed) {
-              this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoRevisionVerificada);
-              this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id)
-                .subscribe((data: DataRequest) => {
-                  if (data) {
-                    this.codigoNotificacion = "FR2"; // NOTIFICACION(FR2)
-                    Swal.fire({
-                      title: "Revisión Verficada Enviada",
-                      icon: "success",
-                    }).then((result) => {
-                      if (result.value) {
-                        this.busquedaPlanes(data.Data);
-                        this.loadData();
-                        this.addActividad = false;
-                      }
-                    });
-                  }
-                });
-            } else {
-              Swal.fire({
-                title: "Envio de Revisión Verificada Cancelado",
-                icon: "error",
-                showConfirmButton: false,
-                timer: 2500,
+      if (result.isConfirmed) {
+        Swal.fire({
+          title: 'Verificar Revisión',
+          text: `¿Desea verificar la revisión?`,
+          icon: 'warning',
+          confirmButtonText: `Sí`,
+          cancelButtonText: `No`,
+          showCancelButton: true
+        }).then((result) => {
+          if (result.isConfirmed) {
+            this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoRevisionVerificada);
+            this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id)
+              .subscribe((data: DataRequest) => {
+                if (data) {
+                  this.codigoNotificacion = "FR2"; // NOTIFICACION(FR2)
+                  Swal.fire({
+                    title: "Revisión Verficada Enviada",
+                    icon: "success",
+                  }).then((result) => {
+                    if (result.value) {
+                      this.busquedaPlanes(data.Data);
+                      this.loadData();
+                      this.addActividad = false;
+                    }
+                  });
+                }
               });
-            }
-          }, (error) => {
+          } else {
             Swal.fire({
-              title: "Error en la operación",
+              title: "Envio de Revisión Verificada Cancelado",
               icon: "error",
-              text: `${JSON.stringify(error)}`,
               showConfirmButton: false,
               timer: 2500,
             });
-          })
-        } else if (result.dismiss === Swal.DismissReason.cancel) {
+          }
+        }, (error) => {
           Swal.fire({
-            title: "Envio de Revisión Verificada Cancelado",
+            title: "Error en la operación",
             icon: "error",
+            text: `${JSON.stringify(error)}`,
             showConfirmButton: false,
             timer: 2500,
           });
-        }
+        })
+      } else if (result.dismiss === Swal.DismissReason.cancel) {
+        Swal.fire({
+          title: "Envio de Revisión Verificada Cancelado",
+          icon: "error",
+          showConfirmButton: false,
+          timer: 2500,
+        });
       }
+    }
     );
   }
 
