@@ -9,11 +9,11 @@ import { isNumeric } from 'rxjs/internal-compatibility';
 import { DataRequest } from 'src/app/@core/models/dataRequest';
 import { Plan } from 'src/app/@core/models/plan';
 import { Vigencia } from 'src/app/@core/models/vigencia';
-import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import Swal from 'sweetalert2';
 import { environment } from '../../../environments/environment';
 import { rubros_aux } from '../recursos/rubros';
+import { CodigosService } from '@udistrital/planeacion-utilidades-module';
 
 @Component({
   selector: 'app-docentes',
@@ -51,6 +51,9 @@ export class DocentesComponent implements OnInit {
   incrementoAnterior: number = 0.0;
   niveles: string[] = ["Pregrado", "Posgrado"]
 
+  CODIGO_ESTADO_PRE_AVAL!: string;
+  CODIGO_ESTADO_REVISADO!: string;
+
   @ViewChild(MatPaginator) paginatorRHF!: MatPaginator;
   @ViewChild(MatPaginator) paginatorRHVPRE!: MatPaginator;
   @ViewChild(MatPaginator) paginatorRHVPOS!: MatPaginator;
@@ -63,12 +66,17 @@ export class DocentesComponent implements OnInit {
   @Input() versiones!: Plan[];
   @Input() vigencia!: Vigencia;
   @Output() acciones = new EventEmitter<any>();
-  constructor(private request: RequestManager, private codigosService: CodigosService) {
+
+  private codigosService = new CodigosService();
+
+  constructor(private request: RequestManager) {
     this.loadRubros();
   }
 
   async ngOnInit() {
-    await this.codigosService.cargarIdentificadores();
+    this.CODIGO_ESTADO_PRE_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'PA_SP')
+    this.CODIGO_ESTADO_REVISADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'R_SP')
+
     this.dataSourceRHF = new MatTableDataSource<any>();
     this.dataSourceRHVPRE = new MatTableDataSource<any>();
     this.dataSourceRHVPOS = new MatTableDataSource<any>();
@@ -93,7 +101,7 @@ export class DocentesComponent implements OnInit {
     Swal.close();
   }
 
-  loadTabla() {
+  async loadTabla() {
     if (this.dataTabla) {
       this.dataSourceRubrosPre.data = [
         {
@@ -227,7 +235,7 @@ export class DocentesComponent implements OnInit {
           "rubro": "",
           "codigo": ""
         }];
-      this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:` + this.plan + `,tipo_identificacion_id:${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequest) => {
+      this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:` + this.plan + `,tipo_identificacion_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP')}`).subscribe((data: DataRequest) => {
         if (data) {
           let identificacion = data.Data[0];
           if (identificacion.activo === false) {
@@ -481,8 +489,8 @@ export class DocentesComponent implements OnInit {
   }
 
   getData() {
-    return new Promise((resolve) => {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequest) => {
+    return new Promise(async (resolve) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP')}`).subscribe((data: DataRequest) => {
         if (data) {
           this.data = data.Data;
           resolve(this.data)
@@ -625,12 +633,12 @@ export class DocentesComponent implements OnInit {
   }
 
   verificarVersiones(): boolean {
-    let preAval = this.versiones.filter(p => p.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoPreAval)));
+    let preAval = this.versiones.filter(p => p.estado_plan_id.match(this.CODIGO_ESTADO_PRE_AVAL));
     return preAval.length != 0;
   }
 
   verificarObservaciones(): boolean {
-    let preAval = this.versiones.filter(p => p.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoRevisado)));
+    let preAval = this.versiones.filter(p => p.estado_plan_id.match(this.CODIGO_ESTADO_REVISADO));
     return preAval.length != 0;
   }
 
@@ -1067,7 +1075,7 @@ export class DocentesComponent implements OnInit {
     return this.banderaCerrar;
   }
 
-  guardarRecursos() {
+  async guardarRecursos() {
     if (this.checkGeneral_TotalCesantiasPensiones()) {
       // Swal.fire({
       //   icon: 'warning',
@@ -1140,7 +1148,7 @@ export class DocentesComponent implements OnInit {
           "rubros_pos": dataRubrosPos
         }
         let aux = JSON.stringify(Object.assign({}, identificaciones));
-        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, aux, `${this.plan}/${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequest) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, aux, `${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP')}`).subscribe((data: DataRequest) => {
           if (data) {
             Swal.fire({
               title: 'Guardado exitoso',
