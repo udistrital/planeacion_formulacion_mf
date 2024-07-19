@@ -10,11 +10,11 @@ import { Actividad } from 'src/app/@core/models/actividad';
 import { DataRequest } from 'src/app/@core/models/dataRequest';
 import { Plan } from 'src/app/@core/models/plan';
 import { Vigencia } from 'src/app/@core/models/vigencia';
-import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
 import { rubros_aux } from '../recursos/rubros';
+import { CodigosService } from '@udistrital/planeacion-utilidades-module';
 
 @Component({
   selector: 'app-contratistas',
@@ -49,6 +49,9 @@ export class ContratistasComponent implements OnInit {
   rubros = rubros_aux
   totalInc!: number;
 
+  CODIGO_ESTADO_PRE_AVAL!: string;
+  CODIGO_ESTADO_REVISADO!: string;
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   @Input() dataSourceActividades!: MatTableDataSource<Actividad>;
@@ -58,13 +61,16 @@ export class ContratistasComponent implements OnInit {
   @Input() versiones!: Plan[];
   @Input() vigencia!: Vigencia;
   @Output() acciones = new EventEmitter<any>();
+
+  private codigosService = new CodigosService();
+
   constructor(
     private request: RequestManager,
-    private codigosService: CodigosService
   ) { }
 
   async ngOnInit() {
-    await this.codigosService.cargarIdentificadores();
+    this.CODIGO_ESTADO_PRE_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'PA_SP')
+    this.CODIGO_ESTADO_REVISADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'R_SP');
     this.loadPlan();
     this.dataSource = new MatTableDataSource<any>();
     this.loadPerfiles();
@@ -203,7 +209,7 @@ export class ContratistasComponent implements OnInit {
 
 
   verificarVersiones(): boolean {
-    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoPreAval)));
+    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.CODIGO_ESTADO_PRE_AVAL));
     if (preAval.length != 0) {
       return true;
     } else {
@@ -211,7 +217,7 @@ export class ContratistasComponent implements OnInit {
     }
   }
   verificarObservaciones(): boolean {
-    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoRevisado)));
+    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.CODIGO_ESTADO_REVISADO));
     if (preAval.length != 0) {
       return true;
     } else {
@@ -238,9 +244,9 @@ export class ContratistasComponent implements OnInit {
     )
   }
 
-  loadTabla() {
+  async loadTabla() {
     if (this.dataTabla) {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionContratistas)}`).subscribe((dataG: DataRequest) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP')}`).subscribe((dataG: DataRequest) => {
         if (dataG.Data != null) {
           this.dataSource.data = dataG.Data;
           this.rubroSeleccionado = rubros_aux[rubros_aux.findIndex((r) => r.Codigo === this.dataSource.data[0].rubro)]
@@ -250,8 +256,8 @@ export class ContratistasComponent implements OnInit {
     }
   }
 
-  loadPerfiles() {
-    this.request.get(environment.PARAMETROS_SERVICE, `parametro?query=TipoParametroId:${this.codigosService.getId(TIPO.ParametroPerfilContratistas)}`).subscribe((data: DataRequest) => {
+  async loadPerfiles() {
+    this.request.get(environment.PARAMETROS_SERVICE, `parametro?query=TipoParametroId:${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP')}`).subscribe((data: DataRequest) => {
       if (data) {
         this.perfiles = data.Data
       }
@@ -486,7 +492,7 @@ export class ContratistasComponent implements OnInit {
     this.acciones.emit({ data, accion, identi });
   }
 
-  guardarContratistas() {
+  async guardarContratistas() {
     if (this.rubroSeleccionado != undefined) {
       this.accionBoton = 'guardar';
       this.tipoIdenti = 'contratistas'
@@ -514,7 +520,7 @@ export class ContratistasComponent implements OnInit {
           obj["index"] = num.toString();
         }
         let dataS = JSON.stringify(Object.assign({}, data))
-        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/6184b3e6f6fc97850127bb68`).subscribe((data: DataRequest) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP')}`).subscribe((data: DataRequest) => {
           if (data) {
             Swal.fire({
               title: 'Guardado exitoso',
