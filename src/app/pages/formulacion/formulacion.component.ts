@@ -17,6 +17,7 @@ import { RequestManager } from 'src/app/@core/services/requestManager';
 import { Notificaciones } from 'src/app/@core/services/notificaciones';
 import { environment } from 'src/environments/environment';
 import { ServiceCookies, ImplicitAutenticationService } from '@udistrital/planeacion-utilidades-module';
+import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 import { CodigosService } from '@udistrital/planeacion-utilidades-module';
 
@@ -101,6 +102,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   //Servicios Utilidades Module
   private serviceCookies = new ServiceCookies();
   private autenticationService = new ImplicitAutenticationService();
+  private routeSubscription!: Subscription;
+  fromUrl!: boolean;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -181,7 +184,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     }
 
     // dependencia_id, vigencia_id, nombre, version
-    this.activatedRoute.params.subscribe(async (prm) => {
+    this.routeSubscription = this.activatedRoute.params.subscribe(async (prm) => {
       let dependencia_id = prm['dependencia_id'];
       let vigencia_id = prm['vigencia_id'];
       let nombre = prm['nombre'];
@@ -191,6 +194,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         vigencia_id != undefined &&
         nombre != undefined
       ) {
+        this.fromUrl = true;
         await this.cargarPlan({
           dependencia_id,
           vigencia_id,
@@ -215,6 +219,12 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.serviceCookies.deleteCookie("unidad");
       this.serviceCookies.deleteCookie("vigencia");
       this.serviceCookies.deleteCookie("plan");
+    }
+    if (this.routeSubscription) {
+      this.routeSubscription.unsubscribe();
+    }
+    if (this.fromUrl) {
+      window.location.reload();
     }
   }
 
