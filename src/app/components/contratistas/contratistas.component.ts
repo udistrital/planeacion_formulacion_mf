@@ -121,21 +121,19 @@ export class ContratistasComponent implements OnInit {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
         this.mostrarObservaciones = this.verificarObservaciones();
-        if (this.readonlyTable != true) { //Se tiene en cuenta vigencia para la consulta --  loadVigenciaConsulta()
-          this.readonlyTable = this.verificarVersiones();
-        }
+        this.readonlyTable = false;
         if (this.mostrarObservaciones) {
           return ['acciones', 'descripcionNecesidad', 'perfil', 'cantidad', 'meses', 'dias', 'valorUnitario', 'valorUnitarioInc', 'valorTotal', 'valorTotalInc', 'actividades', 'observaciones'];
         } else {
           return ['acciones', 'descripcionNecesidad', 'perfil', 'cantidad', 'meses', 'dias', 'valorUnitario', 'valorUnitarioInc', 'valorTotal', 'valorTotalInc', 'actividades'];
         }
       }
-      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada' || this.estadoPlan == 'Pre Aval') {
         this.readonlyObs = true;
-        this.readonlyTable = true;
+        this.readonlyTable = false;
         return ['acciones', 'descripcionNecesidad', 'perfil', 'cantidad', 'meses', 'dias', 'valorUnitario', 'valorUnitarioInc', 'valorTotal', 'valorTotalInc', 'actividades', 'observaciones'];
       }
-      if (this.estadoPlan == 'Pre Aval' || this.estadoPlan == 'Aval') {
+      if (this.estadoPlan == 'Aval') {
         this.readonlyTable = true;
         this.readonlyObs = true;
         return ['acciones', 'descripcionNecesidad', 'perfil', 'cantidad', 'meses', 'dias', 'valorUnitario', 'valorUnitarioInc', 'valorTotal', 'valorTotalInc', 'actividades'];
@@ -153,7 +151,7 @@ export class ContratistasComponent implements OnInit {
         this.readonlyTable = true;
         return ['acciones', 'descripcionNecesidad', 'perfil', 'cantidad', 'meses', 'dias', 'valorUnitario', 'valorUnitarioInc', 'valorTotal', 'valorTotalInc', 'actividades', 'observaciones'];
       }
-      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada') {
         this.readonlyObs = true;
         this.readonlyTable = true;
         return ['acciones', 'descripcionNecesidad', 'perfil', 'cantidad', 'meses', 'dias', 'valorUnitario', 'valorUnitarioInc', 'valorTotal', 'valorTotalInc', 'actividades', 'observaciones'];
@@ -176,7 +174,7 @@ export class ContratistasComponent implements OnInit {
           return ['AccionesP', 'DescripcionNecesidadP', 'PerfilP', 'CantidadP', 'TiempoContrato', 'ValorUnitarioP', 'ValorUnitarioIncP', 'ValorTotalP', 'ValorTotalIncP', 'ActividadesP'];
         }
       }
-      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada' || this.estadoPlan == 'Pre Aval') {
         this.readonlyObs = true;
         return ['AccionesP', 'DescripcionNecesidadP', 'PerfilP', 'CantidadP', 'TiempoContrato', 'ValorUnitarioP', 'ValorUnitarioIncP', 'ValorTotalP', 'ValorTotalIncP', 'ActividadesP', 'ObservacionesP'];
       }
@@ -193,7 +191,7 @@ export class ContratistasComponent implements OnInit {
       if (this.estadoPlan == 'En revisión') {
         return ['AccionesP', 'DescripcionNecesidadP', 'PerfilP', 'CantidadP', 'TiempoContrato', 'ValorUnitarioP', 'ValorUnitarioIncP', 'ValorTotalP', 'ValorTotalIncP', 'ActividadesP', 'ObservacionesP'];
       }
-      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada') {
         return ['AccionesP', 'DescripcionNecesidadP', 'PerfilP', 'CantidadP', 'TiempoContrato', 'ValorUnitarioP', 'ValorUnitarioIncP', 'ValorTotalP', 'ValorTotalIncP', 'ActividadesP', 'ObservacionesP'];
       }
       if (this.estadoPlan == 'Pre Aval' || this.estadoPlan == 'Aval' || this.estadoPlan == 'Formulado') {

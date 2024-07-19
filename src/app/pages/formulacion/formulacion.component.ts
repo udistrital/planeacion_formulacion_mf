@@ -18,6 +18,7 @@ import { RequestManager } from 'src/app/@core/services/requestManager';
 import { Notificaciones } from 'src/app/@core/services/notificaciones';
 import { environment } from 'src/environments/environment';
 import { ServiceCookies, ImplicitAutenticationService } from '@udistrital/planeacion-utilidades-module';
+import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
 
 @Component({
@@ -93,6 +94,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   //Servicios Utilidades Module
   private serviceCookies = new ServiceCookies();
   private autenticationService = new ImplicitAutenticationService();
+  private routeSubscription!: Subscription;
+  fromUrl!: boolean;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -129,6 +132,23 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.moduloVisible = false;
     this.isChecked = true;
     this.pendienteCheck = false;
+
+    let roles: any = this.autenticationService.getRole();
+
+    if (roles.__zone_symbol__value.find((x: any) => x == 'PLANEACION')) {
+      this.rol = 'PLANEACION';
+    } else if (roles.__zone_symbol__value.find((x: any) => x == 'ASISTENTE_PLANEACION')) {
+      this.rol = 'ASISTENTE_PLANEACION';
+    } else if (
+      roles.__zone_symbol__value.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
+      this.rol = 'JEFE_DEPENDENCIA';
+    }
+
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
+      this.loadUnidades();
+    } else if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
+      this.validarUnidad()
+    }
   }
 
   displayedColumns: string[] = [];
@@ -137,23 +157,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   async ngOnInit() {
     await this.codigosService.cargarIdentificadores();
-    await this.autenticationService.getRoles().then((roles: any) => {
-      if (roles.find((x: any) => x == 'PLANEACION')) {
-        this.rol = 'PLANEACION';
-      } else if (roles.find((x: any) => x == 'ASISTENTE_PLANEACION')) {
-        this.rol = "ASISTENTE_PLANEACION";
-      } else if (roles.find((x: any) => x == 'JEFE_DEPENDENCIA')) {
-        this.rol = 'JEFE_DEPENDENCIA';
-      } else if (roles.find((x: any) => x == 'ASISTENTE_DEPENDENCIA')) {
-        this.rol = 'ASISTENTE_DEPENDENCIA';
-      }
-    });
 
-    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
-      await this.loadUnidades();
-    } else if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
-      await this.validarUnidad()
-    }
     const unidadCookie = this.serviceCookies.getCookie("unidad");
     const vigenciaCookie = this.serviceCookies.getCookie("vigencia");
     const planCookie = this.serviceCookies.getCookie("plan");
@@ -165,7 +169,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     }
 
     // dependencia_id, vigencia_id, nombre, version
-    this.activatedRoute.params.subscribe(async (prm) => {
+    this.routeSubscription = this.activatedRoute.params.subscribe(async (prm) => {
       let dependencia_id = prm['dependencia_id'];
       let vigencia_id = prm['vigencia_id'];
       let nombre = prm['nombre'];
@@ -175,6 +179,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         vigencia_id != undefined &&
         nombre != undefined
       ) {
+        this.fromUrl = true;
         await this.cargarPlan({
           dependencia_id,
           vigencia_id,
@@ -199,6 +204,12 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.serviceCookies.deleteCookie("unidad");
       this.serviceCookies.deleteCookie("vigencia");
       this.serviceCookies.deleteCookie("plan");
+    }
+    if (this.routeSubscription) {
+      this.routeSubscription.unsubscribe();
+    }
+    if (this.fromUrl) {
+      window.location.reload();
     }
   }
 

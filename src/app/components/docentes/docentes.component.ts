@@ -537,12 +537,12 @@ export class DocentesComponent implements OnInit {
         }
 
       }
-      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada' || this.estadoPlan == 'Pre Aval') {
         this.readonlyObs = true;
-        this.readonlyTable = true;
+        this.readonlyTable = false;
         return ['index', 'acciones', 'tipo', 'categoria', 'cantidad', 'semanas', 'horas', 'totalHorasIndividual', 'totalHoras', 'meses', 'sueldoBasico', 'sueldoBasicoIndividual', 'sueldoMensual', 'sueldoMensualIndividual', 'primaServicios', 'primaNavidad', 'primaVacaciones', 'vacacionesProyeccion', 'bonificacion', 'cesantiasPublico', 'cesantiasPrivado', 'interesesCesantias', 'cesantias', 'totalCesantiasIndividual', 'totalCesantias', 'totalSaludIndividual', 'totalSalud', 'pensionesPublico', 'pensionesPrivado', 'totalPensionesIndividual', 'totalPensiones', 'totalArlIndividual', 'totalArl', 'caja', 'icbf', 'totalBasicoIndividual', 'totalBasico', 'totalAportesIndividual', 'totalAportes', 'totalIndividual', 'total', 'observaciones'];
       }
-      if (this.estadoPlan == 'Pre Aval' || this.estadoPlan == 'Aval') {
+      if (this.estadoPlan == 'Aval') {
         this.readonlyObs = true;
         this.readonlyTable = true;
         return ['index', 'acciones', 'tipo', 'categoria', 'cantidad', 'semanas', 'horas', 'totalHorasIndividual', 'totalHoras', 'meses', 'sueldoBasico', 'sueldoBasicoIndividual', 'sueldoMensual', 'sueldoMensualIndividual', 'primaServicios', 'primaNavidad', 'primaVacaciones', 'vacacionesProyeccion', 'bonificacion', 'cesantiasPublico', 'cesantiasPrivado', 'interesesCesantias', 'cesantias', 'totalCesantiasIndividual', 'totalCesantias', 'totalSaludIndividual', 'totalSalud', 'pensionesPublico', 'pensionesPrivado', 'totalPensionesIndividual', 'totalPensiones', 'totalArlIndividual', 'totalArl', 'caja', 'icbf', 'totalBasicoIndividual', 'totalBasico', 'totalAportesIndividual', 'totalAportes', 'totalIndividual', 'total'];
@@ -560,7 +560,7 @@ export class DocentesComponent implements OnInit {
         this.readonlyTable = true;
         return ['index', 'acciones', 'tipo', 'categoria', 'cantidad', 'semanas', 'horas', 'totalHorasIndividual', 'totalHoras', 'meses', 'sueldoBasico', 'sueldoBasicoIndividual', 'sueldoMensual', 'sueldoMensualIndividual', 'primaServicios', 'primaNavidad', 'primaVacaciones', 'vacacionesProyeccion', 'bonificacion', 'cesantiasPublico', 'cesantiasPrivado', 'interesesCesantias', 'cesantias', 'totalCesantiasIndividual', 'totalCesantias', 'totalSaludIndividual', 'totalSalud', 'pensionesPublico', 'pensionesPrivado', 'totalPensionesIndividual', 'totalPensiones', 'totalArlIndividual', 'totalArl', 'caja', 'icbf', 'totalBasicoIndividual', 'totalBasico', 'totalAportesIndividual', 'totalAportes', 'totalIndividual', 'total', 'observaciones'];
       }
-      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada') {
         this.readonlyObs = true;
         this.readonlyTable = true;
         return ['index', 'acciones', 'tipo', 'categoria', 'cantidad', 'semanas', 'horas', 'totalHorasIndividual', 'totalHoras', 'meses', 'sueldoBasico', 'sueldoBasicoIndividual', 'sueldoMensual', 'sueldoMensualIndividual', 'primaServicios', 'primaNavidad', 'primaVacaciones', 'vacacionesProyeccion', 'bonificacion', 'cesantiasPublico', 'cesantiasPrivado', 'interesesCesantias', 'cesantias', 'totalCesantiasIndividual', 'totalCesantias', 'totalSaludIndividual', 'totalSalud', 'pensionesPublico', 'pensionesPrivado', 'totalPensionesIndividual', 'totalPensiones', 'totalArlIndividual', 'totalArl', 'caja', 'icbf', 'totalBasicoIndividual', 'totalBasico', 'totalAportesIndividual', 'totalAportes', 'totalIndividual', 'total', 'observaciones'];
@@ -575,10 +575,10 @@ export class DocentesComponent implements OnInit {
   }
 
   visualizarHeaders(): string[] {
-    if (this.rol == 'JEFE_DEPENDENCIA') {
+    if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
-        this.readonlyTable = this.verificarVersiones();
+        this.readonlyTable = false;
         this.mostrarObservaciones = this.verificarObservaciones();
         if (this.mostrarObservaciones) {
           return ['indexP', 'accionesP', 'tipoP', 'categoriaP', 'CantidadP', 'semanasP', 'horasP', 'totalHorasIndividualP', 'totalHorasP', 'mesesP', 'sueldoBasicoP', 'sueldoBasicoIndividualP', 'sueldoMensualP', 'sueldoMensualIndividualP', 'prestacionesSociales', 'seguridadSocial', 'parafiscales', 'totalRecursoP', 'observacionesP']
@@ -587,19 +587,19 @@ export class DocentesComponent implements OnInit {
         }
 
       }
-      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada' || this.estadoPlan == 'Pre Aval') {
         this.readonlyObs = true;
-        this.readonlyTable = true;
+        this.readonlyTable = false;
         return ['indexP', 'accionesP', 'tipoP', 'categoriaP', 'CantidadP', 'semanasP', 'horasP', 'totalHorasIndividualP', 'totalHorasP', 'mesesP', 'sueldoBasicoP', 'sueldoBasicoIndividualP', 'sueldoMensualP', 'sueldoMensualIndividualP', 'prestacionesSociales', 'seguridadSocial', 'parafiscales', 'totalRecursoP', 'observacionesP']
       }
-      if (this.estadoPlan == 'Pre Aval' || this.estadoPlan == 'Aval') {
+      if (this.estadoPlan == 'Aval') {
         this.readonlyObs = true;
         this.readonlyTable = true;
         return ['indexP', 'accionesP', 'tipoP', 'categoriaP', 'CantidadP', 'semanasP', 'horasP', 'totalHorasIndividualP', 'totalHorasP', 'mesesP', 'sueldoBasicoP', 'sueldoBasicoIndividualP', 'sueldoMensualP', 'sueldoMensualIndividualP', 'prestacionesSociales', 'seguridadSocial', 'parafiscales', 'totalRecursoP']
       }
     }
 
-    if (this.rol == 'PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
         this.readonlyTable = true;
@@ -610,7 +610,7 @@ export class DocentesComponent implements OnInit {
         this.readonlyTable = true;
         return ['indexP', 'accionesP', 'tipoP', 'categoriaP', 'CantidadP', 'semanasP', 'horasP', 'totalHorasIndividualP', 'totalHorasP', 'mesesP', 'sueldoBasicoP', 'sueldoBasicoIndividualP', 'sueldoMensualP', 'sueldoMensualIndividualP', 'prestacionesSociales', 'seguridadSocial', 'parafiscales', 'totalRecursoP', 'observacionesP']
       }
-      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada') {
         this.readonlyObs = true;
         this.readonlyTable = true;
         return ['indexP', 'accionesP', 'tipoP', 'categoriaP', 'CantidadP', 'semanasP', 'horasP', 'totalHorasIndividualP', 'totalHorasP', 'mesesP', 'sueldoBasicoP', 'sueldoBasicoIndividualP', 'sueldoMensualP', 'sueldoMensualIndividualP', 'prestacionesSociales', 'seguridadSocial', 'parafiscales', 'totalRecursoP', 'observacionesP']
