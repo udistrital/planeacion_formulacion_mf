@@ -141,7 +141,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.isChecked = true;
     this.pendienteCheck = false;
 
-    let roles: any = this.autenticationService.getRole();
+    let roles: any = this.autenticationService.getRoles();
 
     if (roles.__zone_symbol__value.find((x: any) => x == 'PLANEACION')) {
       this.rol = 'PLANEACION';
