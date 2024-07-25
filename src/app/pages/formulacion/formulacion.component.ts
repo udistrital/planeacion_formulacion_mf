@@ -141,7 +141,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.isChecked = true;
     this.pendienteCheck = false;
 
-    let roles: any = this.autenticationService.getRole();
+    let roles: any = this.autenticationService.getRoles();
 
     if (roles.__zone_symbol__value.find((x: any) => x == 'PLANEACION')) {
       this.rol = 'PLANEACION';
@@ -1141,6 +1141,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         title: 'Cargando información',
         timerProgressBar: true,
         showConfirmButton: false,
+        allowOutsideClick: false,
         willOpen: () => {
           Swal.showLoading();
         },
@@ -1203,6 +1204,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true,
       confirmButtonText: `Si`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
     }).then((result) => {
       if (result.isConfirmed) {
         this.request
@@ -1436,6 +1438,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true,
       confirmButtonText: `Si`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
     }).then((result) => {
       if (result.isConfirmed) {
         this.addActividad = false;
@@ -1469,6 +1472,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         showCancelButton: true,
         confirmButtonText: `Si`,
         cancelButtonText: `No`,
+        allowOutsideClick: false,
       }).then(
         (result) => {
           if (result.isConfirmed) {
@@ -1527,6 +1531,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               icon: 'warning',
               confirmButtonText: `Si`,
               cancelButtonText: `No`,
+              allowOutsideClick: false,
               showCancelButton: true
             }).then((result) => {
               if (result.isConfirmed) {
@@ -1627,6 +1632,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Continuar`,
       cancelButtonText: `Cancelar`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1678,6 +1684,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1723,6 +1730,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: "warning",
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true,
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1788,6 +1796,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1844,6 +1853,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1890,6 +1900,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: "warning",
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true,
     }).then(
       // @ts-ignore
