@@ -23,6 +23,7 @@ export type Plan = {
   nombre: string;
   tipo_plan_id: string;
   vigencia?: string;
+  reformulacion?: boolean;
   fecha_creacion: string;
   fecha_modificacion: string;
   __v: number;

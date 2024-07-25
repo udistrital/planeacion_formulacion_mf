@@ -141,7 +141,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.isChecked = true;
     this.pendienteCheck = false;
 
-    let roles: any = this.autenticationService.getRole();
+    let roles: any = this.autenticationService.getRoles();
 
     if (roles.__zone_symbol__value.find((x: any) => x == 'PLANEACION')) {
       this.rol = 'PLANEACION';
@@ -926,9 +926,15 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       (respuesta: DataRequest) => {
         if (respuesta) {
           let versiones = respuesta.Data as Plan[];
-          versiones.forEach((_, i) => {
+          let auxReformulacion = false;
+          for (let i = 0; i < versiones.length; i++) {
             versiones[i].numero = (i + 1).toString();
-          });
+            if(versiones[i].reformulacion == true){
+              auxReformulacion = true
+            }
+            versiones[i].reformulacion = auxReformulacion
+            
+          }
           this.versiones = versiones;
           this.plan =
             this.versiones[
