@@ -141,7 +141,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.isChecked = true;
     this.pendienteCheck = false;
 
-    let roles: any = this.autenticationService.getRole();
+    let roles: any = this.autenticationService.getRoles();
 
     if (roles.__zone_symbol__value.find((x: any) => x == 'PLANEACION')) {
       this.rol = 'PLANEACION';
@@ -164,6 +164,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   dataSource!: MatTableDataSource<Actividad>;
 
   async ngOnInit() {
+    this.enviarNotificacion();
     this.ID_ESTADO_EN_FORMULACION = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'EF_SP');
     this.ID_ESTADO_FORMULADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'F_SP');
     this.ID_ESTADO_EN_REVISION = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'ER_SP');
@@ -872,7 +873,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
       // Cuando el plan pasa de formulación a seguimiento
       if (this.codigoNotificacion == "FPA2") {
-        this.codigoNotificacion = "S"; // NOTIFICACION(S)
+        this.codigoNotificacion = "FS"; // NOTIFICACION(FS)
         this.enviarNotificacion();
       }
       this.codigoNotificacion = "";
