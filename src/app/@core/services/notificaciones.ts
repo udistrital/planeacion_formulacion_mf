@@ -151,7 +151,7 @@ export class Notificaciones {
 
         let data = {
           ...datosBandera, 
-          documentos: ["7230282"],
+          documentos,
           plantilla_mensaje: plantilla.plantilla_mensaje,
           sistema_id,
           tipo_notificacion_id
