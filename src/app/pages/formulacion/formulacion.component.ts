@@ -107,6 +107,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+  codigo_abreviacion: any;
 
   private codigosService = new CodigosService();
 
@@ -872,7 +873,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
       // Cuando el plan pasa de formulación a seguimiento
       if (this.codigoNotificacion == "FPA2") {
-        this.codigoNotificacion = "S"; // NOTIFICACION(S)
+        this.codigoNotificacion = "FS"; // NOTIFICACION(FS)
         this.enviarNotificacion();
       }
       this.codigoNotificacion = "";
@@ -884,6 +885,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       (data: DataRequest) => {
         if (data) {
           this.estadoPlan = (data.Data as EstadoPlan).nombre;
+          this.codigo_abreviacion = data.Data.codigo_abreviacion;
           this.getIconEstado();
           this.visualizeObs();
           this.enviarNotificacion();
