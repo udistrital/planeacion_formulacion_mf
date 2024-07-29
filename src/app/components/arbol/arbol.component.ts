@@ -10,11 +10,11 @@ import {
 import { Observable } from 'rxjs';
 import { Nodo, Subgrupo } from 'src/app/@core/models/arbol';
 import { DataRequest } from 'src/app/@core/models/dataRequest';
-import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import { ImplicitAutenticationService } from '@udistrital/planeacion-utilidades-module';
 import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
+import { CodigosService } from '@udistrital/planeacion-utilidades-module';
 
 const Checked: string = 'done';
 const Unchecked: string = 'compare_arrows';
@@ -26,6 +26,7 @@ const No_Aplica: string = "no aplica"
   styleUrls: ['./arbol.component.scss'],
 })
 export class ArbolComponent implements OnInit {
+  ID_TIPO_PROYECTO!: string;
 
   selectedFiles: any;
   dataRow: any;
@@ -89,10 +90,12 @@ export class ArbolComponent implements OnInit {
   @Input() estado: string = "";
   @Input() updateSignal!: Observable<String[]>;
   @Output() grupo = new EventEmitter<any>();
+
+  private codigosService = new CodigosService();
+
   constructor(
     private formBuilder: FormBuilder,
     private request: RequestManager,
-    private codigosService: CodigosService
   ) {
     this.autenticationService.getRoles().then((roles: any) => {
       if (roles.find((rol: any) => rol == 'JEFE_DEPENDENCIA' || rol == 'ASISTENTE_DEPENDENCIA')) {
@@ -112,8 +115,8 @@ export class ArbolComponent implements OnInit {
     }
   }
 
-  ngOnChanges(changes: any) {
-    if (this.tipoPlanId !== this.codigosService.getId(TIPO.PlanProyecto)) {
+  async ngOnChanges(changes: any) {
+    if (this.tipoPlanId !== await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PR_SP')) {
       if (this.idPlan !== this.planActual) {
         this.loadArbolMid();
         this.planActual = this.idPlan;
@@ -132,6 +135,7 @@ export class ArbolComponent implements OnInit {
       title: 'Cargando información',
       timerProgressBar: true,
       showConfirmButton: false,
+      allowOutsideClick: false,
       willOpen: () => {
         Swal.showLoading();
       },
@@ -230,7 +234,8 @@ export class ArbolComponent implements OnInit {
               icon: 'warning',
               confirmButtonText: `Sí`,
               cancelButtonText: `No`,
-              showCancelButton: true
+              showCancelButton: true,
+              allowOutsideClick: false,
             }).then((result) => {
               if (result.isConfirmed) {
                 resolve(1); // confirma dejar no aplica, quitar resto del nivel
@@ -351,11 +356,11 @@ export class ArbolComponent implements OnInit {
   hasChild = (_: number, node: Nodo) => node.expandable;
 
   async ngOnInit() {
-    await this.codigosService.cargarIdentificadores();
     this.formConstruirPUI = this.formBuilder.group({
       infoControl: ['', Validators.required],
       requiredfile: ['', Validators.required]
     });
     this.planActual = '';
+    this.ID_TIPO_PROYECTO = await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PR_SP')
   }
 }

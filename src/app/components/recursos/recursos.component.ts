@@ -11,8 +11,8 @@ import { environment } from '../../../environments/environment';
 import { rubros_aux } from './rubros';
 import { Plan } from 'src/app/@core/models/plan';
 import { Tipo } from 'src/app/@core/models/tipo';
-import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { Actividad } from 'src/app/@core/models/actividad';
+import { CodigosService } from '@udistrital/planeacion-utilidades-module';
 
 @Component({
   selector: 'app-recursos',
@@ -37,6 +37,9 @@ export class RecursosComponent implements OnInit {
   readonlyTable: boolean = false;
   mostrarObservaciones: boolean = false;
 
+  CODIGO_ESTADO_PRE_AVAL!: string;
+  CODIGO_ESTADO_REVISADO!: string;
+
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   @Input() dataSourceActividades!: MatTableDataSource<Actividad>;
@@ -46,13 +49,17 @@ export class RecursosComponent implements OnInit {
   @Input() versiones!: Plan[];
 
   @Output() acciones = new EventEmitter<any>();
-  constructor(private request: RequestManager, private codigosService: CodigosService) {
+
+  private codigosService = new CodigosService();
+
+  constructor(private request: RequestManager) {
   }
 
   rubros!: any[];
 
   async ngOnInit() {
-    await this.codigosService.cargarIdentificadores();
+    this.CODIGO_ESTADO_PRE_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'PA_SP')
+    this.CODIGO_ESTADO_REVISADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'R_SP');
     this.loadPlan();
     this.loadRubros();
     this.dataSource = new MatTableDataSource();
@@ -95,7 +102,7 @@ export class RecursosComponent implements OnInit {
     if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
-        this.readonlyTable = this.verificarVersiones();
+        this.readonlyTable = false;
         this.mostrarObservaciones = this.verificarObservaciones();
         if (this.mostrarObservaciones && !this.readonlyTable) {
           return ['acciones', 'codigo', 'Nombre', 'valor', 'descripcion', 'actividades', 'observaciones'];
@@ -103,12 +110,12 @@ export class RecursosComponent implements OnInit {
           return ['acciones', 'codigo', 'Nombre', 'valor', 'descripcion', 'actividades'];
         }
       }
-      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada' || this.estadoPlan == 'Pre Aval') {
         this.readonlyObs = true;
-        this.readonlyTable = true;
+        this.readonlyTable = false;
         return ['acciones', 'codigo', 'Nombre', 'valor', 'descripcion', 'actividades', 'observaciones'];
       }
-      if (this.estadoPlan == 'Pre Aval' || this.estadoPlan == 'Aval') {
+      if (this.estadoPlan == 'Aval') {
         this.readonlyObs = true;
         this.readonlyTable = true;
         return ['acciones', 'codigo', 'Nombre', 'valor', 'descripcion', 'actividades'];
@@ -126,7 +133,7 @@ export class RecursosComponent implements OnInit {
         this.readonlyTable = true;
         return ['acciones', 'codigo', 'Nombre', 'valor', 'descripcion', 'actividades', 'observaciones'];
       }
-      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada') {
         this.readonlyObs = true;
         this.readonlyTable = true;
         return ['acciones', 'codigo', 'Nombre', 'valor', 'descripcion', 'actividades', 'observaciones'];
@@ -141,7 +148,7 @@ export class RecursosComponent implements OnInit {
   }
 
   verificarVersiones(): boolean {
-    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoPreAval)));
+    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.CODIGO_ESTADO_PRE_AVAL));
     if (preAval.length != 0) {
       return true;
     } else {
@@ -150,7 +157,7 @@ export class RecursosComponent implements OnInit {
   }
 
   verificarObservaciones(): boolean {
-    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoRevisado)));
+    let preAval = this.versiones.filter(group => group.estado_plan_id.match(this.CODIGO_ESTADO_REVISADO));
     if (preAval.length != 0) {
       return true;
     } else {
@@ -163,6 +170,7 @@ export class RecursosComponent implements OnInit {
       title: 'Cargando información',
       timerProgressBar: true,
       showConfirmButton: false,
+      allowOutsideClick: false,
       willOpen: () => {
         Swal.showLoading();
       },
@@ -171,9 +179,9 @@ export class RecursosComponent implements OnInit {
     Swal.close();
   }
 
-  loadTabla() {
+  async loadTabla() {
     if (this.dataTabla) {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionRecursos)}`).subscribe((dataG: DataRequest) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IR_SP')}`).subscribe((dataG: DataRequest) => {
         if (dataG.Data != null) {
           this.dataSource.data = dataG.Data
         }
@@ -250,6 +258,7 @@ export class RecursosComponent implements OnInit {
       showCancelButton: true,
       confirmButtonText: `Si`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
     }).then((result) => {
       if (result.isConfirmed) {
         this._deleteElemento(index);
@@ -298,7 +307,7 @@ export class RecursosComponent implements OnInit {
     this.acciones.emit({ data, accion, identi });
   }
 
-  guardarRecursos() {
+  async guardarRecursos() {
     this.accionBoton = 'guardar';
     this.tipoIdenti = 'recursos';
     let data = this.dataSource.data;
@@ -320,7 +329,7 @@ export class RecursosComponent implements OnInit {
         obj["index"] = num.toString();
       }
       let dataS = JSON.stringify(Object.assign({}, data))
-      this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/${this.codigosService.getId(TIPO.IdentificacionRecursos)}`).subscribe((data: DataRequest) => {
+      this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IR_SP')}`).subscribe((data: DataRequest) => {
         if (data) {
           Swal.fire({
             title: 'Guardado exitoso',

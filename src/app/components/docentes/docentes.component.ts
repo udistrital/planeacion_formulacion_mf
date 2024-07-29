@@ -9,11 +9,11 @@ import { isNumeric } from 'rxjs/internal-compatibility';
 import { DataRequest } from 'src/app/@core/models/dataRequest';
 import { Plan } from 'src/app/@core/models/plan';
 import { Vigencia } from 'src/app/@core/models/vigencia';
-import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import Swal from 'sweetalert2';
 import { environment } from '../../../environments/environment';
 import { rubros_aux } from '../recursos/rubros';
+import { CodigosService } from '@udistrital/planeacion-utilidades-module';
 
 @Component({
   selector: 'app-docentes',
@@ -51,6 +51,9 @@ export class DocentesComponent implements OnInit {
   incrementoAnterior: number = 0.0;
   niveles: string[] = ["Pregrado", "Posgrado"]
 
+  CODIGO_ESTADO_PRE_AVAL!: string;
+  CODIGO_ESTADO_REVISADO!: string;
+
   @ViewChild(MatPaginator) paginatorRHF!: MatPaginator;
   @ViewChild(MatPaginator) paginatorRHVPRE!: MatPaginator;
   @ViewChild(MatPaginator) paginatorRHVPOS!: MatPaginator;
@@ -63,12 +66,17 @@ export class DocentesComponent implements OnInit {
   @Input() versiones!: Plan[];
   @Input() vigencia!: Vigencia;
   @Output() acciones = new EventEmitter<any>();
-  constructor(private request: RequestManager, private codigosService: CodigosService) {
+
+  private codigosService = new CodigosService();
+
+  constructor(private request: RequestManager) {
     this.loadRubros();
   }
 
   async ngOnInit() {
-    await this.codigosService.cargarIdentificadores();
+    this.CODIGO_ESTADO_PRE_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'PA_SP')
+    this.CODIGO_ESTADO_REVISADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'R_SP')
+
     this.dataSourceRHF = new MatTableDataSource<any>();
     this.dataSourceRHVPRE = new MatTableDataSource<any>();
     this.dataSourceRHVPOS = new MatTableDataSource<any>();
@@ -93,7 +101,7 @@ export class DocentesComponent implements OnInit {
     Swal.close();
   }
 
-  loadTabla() {
+  async loadTabla() {
     if (this.dataTabla) {
       this.dataSourceRubrosPre.data = [
         {
@@ -227,7 +235,7 @@ export class DocentesComponent implements OnInit {
           "rubro": "",
           "codigo": ""
         }];
-      this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:` + this.plan + `,tipo_identificacion_id:${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequest) => {
+      this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:` + this.plan + `,tipo_identificacion_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP')}`).subscribe((data: DataRequest) => {
         if (data) {
           let identificacion = data.Data[0];
           if (identificacion.activo === false) {
@@ -481,8 +489,8 @@ export class DocentesComponent implements OnInit {
   }
 
   getData() {
-    return new Promise((resolve) => {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequest) => {
+    return new Promise(async (resolve) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP')}`).subscribe((data: DataRequest) => {
         if (data) {
           this.data = data.Data;
           resolve(this.data)
@@ -537,12 +545,12 @@ export class DocentesComponent implements OnInit {
         }
 
       }
-      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada' || this.estadoPlan == 'Pre Aval') {
         this.readonlyObs = true;
-        this.readonlyTable = true;
+        this.readonlyTable = false;
         return ['index', 'acciones', 'tipo', 'categoria', 'cantidad', 'semanas', 'horas', 'totalHorasIndividual', 'totalHoras', 'meses', 'sueldoBasico', 'sueldoBasicoIndividual', 'sueldoMensual', 'sueldoMensualIndividual', 'primaServicios', 'primaNavidad', 'primaVacaciones', 'vacacionesProyeccion', 'bonificacion', 'cesantiasPublico', 'cesantiasPrivado', 'interesesCesantias', 'cesantias', 'totalCesantiasIndividual', 'totalCesantias', 'totalSaludIndividual', 'totalSalud', 'pensionesPublico', 'pensionesPrivado', 'totalPensionesIndividual', 'totalPensiones', 'totalArlIndividual', 'totalArl', 'caja', 'icbf', 'totalBasicoIndividual', 'totalBasico', 'totalAportesIndividual', 'totalAportes', 'totalIndividual', 'total', 'observaciones'];
       }
-      if (this.estadoPlan == 'Pre Aval' || this.estadoPlan == 'Aval') {
+      if (this.estadoPlan == 'Aval') {
         this.readonlyObs = true;
         this.readonlyTable = true;
         return ['index', 'acciones', 'tipo', 'categoria', 'cantidad', 'semanas', 'horas', 'totalHorasIndividual', 'totalHoras', 'meses', 'sueldoBasico', 'sueldoBasicoIndividual', 'sueldoMensual', 'sueldoMensualIndividual', 'primaServicios', 'primaNavidad', 'primaVacaciones', 'vacacionesProyeccion', 'bonificacion', 'cesantiasPublico', 'cesantiasPrivado', 'interesesCesantias', 'cesantias', 'totalCesantiasIndividual', 'totalCesantias', 'totalSaludIndividual', 'totalSalud', 'pensionesPublico', 'pensionesPrivado', 'totalPensionesIndividual', 'totalPensiones', 'totalArlIndividual', 'totalArl', 'caja', 'icbf', 'totalBasicoIndividual', 'totalBasico', 'totalAportesIndividual', 'totalAportes', 'totalIndividual', 'total'];
@@ -560,7 +568,7 @@ export class DocentesComponent implements OnInit {
         this.readonlyTable = true;
         return ['index', 'acciones', 'tipo', 'categoria', 'cantidad', 'semanas', 'horas', 'totalHorasIndividual', 'totalHoras', 'meses', 'sueldoBasico', 'sueldoBasicoIndividual', 'sueldoMensual', 'sueldoMensualIndividual', 'primaServicios', 'primaNavidad', 'primaVacaciones', 'vacacionesProyeccion', 'bonificacion', 'cesantiasPublico', 'cesantiasPrivado', 'interesesCesantias', 'cesantias', 'totalCesantiasIndividual', 'totalCesantias', 'totalSaludIndividual', 'totalSalud', 'pensionesPublico', 'pensionesPrivado', 'totalPensionesIndividual', 'totalPensiones', 'totalArlIndividual', 'totalArl', 'caja', 'icbf', 'totalBasicoIndividual', 'totalBasico', 'totalAportesIndividual', 'totalAportes', 'totalIndividual', 'total', 'observaciones'];
       }
-      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada') {
         this.readonlyObs = true;
         this.readonlyTable = true;
         return ['index', 'acciones', 'tipo', 'categoria', 'cantidad', 'semanas', 'horas', 'totalHorasIndividual', 'totalHoras', 'meses', 'sueldoBasico', 'sueldoBasicoIndividual', 'sueldoMensual', 'sueldoMensualIndividual', 'primaServicios', 'primaNavidad', 'primaVacaciones', 'vacacionesProyeccion', 'bonificacion', 'cesantiasPublico', 'cesantiasPrivado', 'interesesCesantias', 'cesantias', 'totalCesantiasIndividual', 'totalCesantias', 'totalSaludIndividual', 'totalSalud', 'pensionesPublico', 'pensionesPrivado', 'totalPensionesIndividual', 'totalPensiones', 'totalArlIndividual', 'totalArl', 'caja', 'icbf', 'totalBasicoIndividual', 'totalBasico', 'totalAportesIndividual', 'totalAportes', 'totalIndividual', 'total', 'observaciones'];
@@ -575,10 +583,10 @@ export class DocentesComponent implements OnInit {
   }
 
   visualizarHeaders(): string[] {
-    if (this.rol == 'JEFE_DEPENDENCIA') {
+    if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
-        this.readonlyTable = this.verificarVersiones();
+        this.readonlyTable = false;
         this.mostrarObservaciones = this.verificarObservaciones();
         if (this.mostrarObservaciones) {
           return ['indexP', 'accionesP', 'tipoP', 'categoriaP', 'CantidadP', 'semanasP', 'horasP', 'totalHorasIndividualP', 'totalHorasP', 'mesesP', 'sueldoBasicoP', 'sueldoBasicoIndividualP', 'sueldoMensualP', 'sueldoMensualIndividualP', 'prestacionesSociales', 'seguridadSocial', 'parafiscales', 'totalRecursoP', 'observacionesP']
@@ -587,19 +595,19 @@ export class DocentesComponent implements OnInit {
         }
 
       }
-      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Formulado' || this.estadoPlan == 'En revisión' || this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada' || this.estadoPlan == 'Pre Aval') {
         this.readonlyObs = true;
-        this.readonlyTable = true;
+        this.readonlyTable = false;
         return ['indexP', 'accionesP', 'tipoP', 'categoriaP', 'CantidadP', 'semanasP', 'horasP', 'totalHorasIndividualP', 'totalHorasP', 'mesesP', 'sueldoBasicoP', 'sueldoBasicoIndividualP', 'sueldoMensualP', 'sueldoMensualIndividualP', 'prestacionesSociales', 'seguridadSocial', 'parafiscales', 'totalRecursoP', 'observacionesP']
       }
-      if (this.estadoPlan == 'Pre Aval' || this.estadoPlan == 'Aval') {
+      if (this.estadoPlan == 'Aval') {
         this.readonlyObs = true;
         this.readonlyTable = true;
         return ['indexP', 'accionesP', 'tipoP', 'categoriaP', 'CantidadP', 'semanasP', 'horasP', 'totalHorasIndividualP', 'totalHorasP', 'mesesP', 'sueldoBasicoP', 'sueldoBasicoIndividualP', 'sueldoMensualP', 'sueldoMensualIndividualP', 'prestacionesSociales', 'seguridadSocial', 'parafiscales', 'totalRecursoP']
       }
     }
 
-    if (this.rol == 'PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       if (this.estadoPlan == 'En formulación') {
         this.readonlyObs = true;
         this.readonlyTable = true;
@@ -610,7 +618,7 @@ export class DocentesComponent implements OnInit {
         this.readonlyTable = true;
         return ['indexP', 'accionesP', 'tipoP', 'categoriaP', 'CantidadP', 'semanasP', 'horasP', 'totalHorasIndividualP', 'totalHorasP', 'mesesP', 'sueldoBasicoP', 'sueldoBasicoIndividualP', 'sueldoMensualP', 'sueldoMensualIndividualP', 'prestacionesSociales', 'seguridadSocial', 'parafiscales', 'totalRecursoP', 'observacionesP']
       }
-      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Ajuste Presupuestal') {
+      if (this.estadoPlan == 'Revisado' || this.estadoPlan == 'Revisión Verificada') {
         this.readonlyObs = true;
         this.readonlyTable = true;
         return ['indexP', 'accionesP', 'tipoP', 'categoriaP', 'CantidadP', 'semanasP', 'horasP', 'totalHorasIndividualP', 'totalHorasP', 'mesesP', 'sueldoBasicoP', 'sueldoBasicoIndividualP', 'sueldoMensualP', 'sueldoMensualIndividualP', 'prestacionesSociales', 'seguridadSocial', 'parafiscales', 'totalRecursoP', 'observacionesP']
@@ -625,12 +633,12 @@ export class DocentesComponent implements OnInit {
   }
 
   verificarVersiones(): boolean {
-    let preAval = this.versiones.filter(p => p.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoPreAval)));
+    let preAval = this.versiones.filter(p => p.estado_plan_id.match(this.CODIGO_ESTADO_PRE_AVAL));
     return preAval.length != 0;
   }
 
   verificarObservaciones(): boolean {
-    let preAval = this.versiones.filter(p => p.estado_plan_id.match(this.codigosService.getId(TIPO.EstadoRevisado)));
+    let preAval = this.versiones.filter(p => p.estado_plan_id.match(this.CODIGO_ESTADO_REVISADO));
     return preAval.length != 0;
   }
 
@@ -806,6 +814,7 @@ export class DocentesComponent implements OnInit {
       showCancelButton: true,
       confirmButtonText: `Si`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
     }).then((result) => {
       if (result.isConfirmed) {
         this._deleteElemento(index, tipo);
@@ -1067,7 +1076,7 @@ export class DocentesComponent implements OnInit {
     return this.banderaCerrar;
   }
 
-  guardarRecursos() {
+  async guardarRecursos() {
     if (this.checkGeneral_TotalCesantiasPensiones()) {
       // Swal.fire({
       //   icon: 'warning',
@@ -1078,7 +1087,8 @@ export class DocentesComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         text: 'El porcentaje de incremento asociado a la vigencia en cuestión aún no ha sido aplicado, por favor presione el botón "Aplicar Incremento" para actualizar los valores.',
-        showConfirmButton: true
+        showConfirmButton: true,
+        allowOutsideClick: false,
       })
     } else {
       if (this.verificarTablas()) {
@@ -1140,7 +1150,7 @@ export class DocentesComponent implements OnInit {
           "rubros_pos": dataRubrosPos
         }
         let aux = JSON.stringify(Object.assign({}, identificaciones));
-        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, aux, `${this.plan}/${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequest) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, aux, `${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP')}`).subscribe((data: DataRequest) => {
           if (data) {
             Swal.fire({
               title: 'Guardado exitoso',
@@ -1197,6 +1207,7 @@ export class DocentesComponent implements OnInit {
             icon: 'warning',
             title: 'Por favor verifique los campos de cesantias',
             showConfirmButton: true,
+            allowOutsideClick: false,
             timer: 2500,
           })
         }

@@ -13,12 +13,13 @@ import { PeriodoSeguimiento } from 'src/app/@core/models/periodo';
 import { Plan, PlanInteres, ResumenPlan } from 'src/app/@core/models/plan';
 import { InfoTercero, TerceroFormulacion } from 'src/app/@core/models/tercero';
 import { Vigencia } from 'src/app/@core/models/vigencia';
-import { CodigosService, TIPO } from 'src/app/@core/services/codigosEstados.service';
 import { RequestManager } from 'src/app/@core/services/requestManager';
 import { Notificaciones } from 'src/app/@core/services/notificaciones';
 import { environment } from 'src/environments/environment';
 import { ServiceCookies, ImplicitAutenticationService } from '@udistrital/planeacion-utilidades-module';
+import { Subscription } from 'rxjs';
 import Swal from 'sweetalert2';
+import { CodigosService } from '@udistrital/planeacion-utilidades-module';
 
 @Component({
   selector: 'app-formulacion',
@@ -26,6 +27,14 @@ import Swal from 'sweetalert2';
   styleUrls: ['./formulacion.component.scss']
 })
 export class FormulacionComponent implements OnInit, OnDestroy {
+  ID_ESTADO_EN_FORMULACION!: string;
+  ID_ESTADO_FORMULADO!: string;
+  ID_ESTADO_EN_REVISION!: string;
+  ID_ESTADO_REVISADO!: string;
+  ID_ESTADO_PRE_AVAL!: string;
+  ID_ESTADO_AVAL!: string;
+  ID_ESTADO_AJUSTE_PRESUPUESTAL!: string;
+  ID_ESTADO_REVISION_VERIFICADA!: string;
 
   activedStep = 0;
   form!: FormGroup;
@@ -93,19 +102,22 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   //Servicios Utilidades Module
   private serviceCookies = new ServiceCookies();
   private autenticationService = new ImplicitAutenticationService();
+  private routeSubscription!: Subscription;
+  fromUrl!: boolean;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+  codigo_abreviacion: any;
+
+  private codigosService = new CodigosService();
 
   constructor(
     private router: Router,
     private formBuilder: FormBuilder,
     private request: RequestManager,
     private notificacionesService: Notificaciones,
-    private codigosService: CodigosService,
     private activatedRoute: ActivatedRoute,
   ) {
-    codigosService.cargarIdentificadores()
     this.loadPeriodos();
     this.formArmonizacion = this.formBuilder.group({
       selectPED: ['',],
@@ -129,6 +141,23 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.moduloVisible = false;
     this.isChecked = true;
     this.pendienteCheck = false;
+
+    let roles: any = this.autenticationService.getRoles();
+
+    if (roles.__zone_symbol__value.find((x: any) => x == 'PLANEACION')) {
+      this.rol = 'PLANEACION';
+    } else if (roles.__zone_symbol__value.find((x: any) => x == 'ASISTENTE_PLANEACION')) {
+      this.rol = 'ASISTENTE_PLANEACION';
+    } else if (
+      roles.__zone_symbol__value.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
+      this.rol = 'JEFE_DEPENDENCIA';
+    }
+
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
+      this.loadUnidades();
+    } else if (this.rol == 'JEFE_DEPENDENCIA') {
+      this.validarUnidad();
+    }
   }
 
   displayedColumns: string[] = [];
@@ -136,24 +165,15 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   dataSource!: MatTableDataSource<Actividad>;
 
   async ngOnInit() {
-    await this.codigosService.cargarIdentificadores();
-    await this.autenticationService.getRoles().then((roles: any) => {
-      if (roles.find((x: any) => x == 'PLANEACION')) {
-        this.rol = 'PLANEACION';
-      } else if (roles.find((x: any) => x == 'ASISTENTE_PLANEACION')) {
-        this.rol = "ASISTENTE_PLANEACION";
-      } else if (roles.find((x: any) => x == 'JEFE_DEPENDENCIA')) {
-        this.rol = 'JEFE_DEPENDENCIA';
-      } else if (roles.find((x: any) => x == 'ASISTENTE_DEPENDENCIA')) {
-        this.rol = 'ASISTENTE_DEPENDENCIA';
-      }
-    });
+    this.ID_ESTADO_EN_FORMULACION = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'EF_SP');
+    this.ID_ESTADO_FORMULADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'F_SP');
+    this.ID_ESTADO_EN_REVISION = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'ER_SP');
+    this.ID_ESTADO_REVISADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'R_SP');
+    this.ID_ESTADO_PRE_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'PA_SP');
+    this.ID_ESTADO_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'A_SP');
+    this.ID_ESTADO_AJUSTE_PRESUPUESTAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'AP_SP');
+    this.ID_ESTADO_REVISION_VERIFICADA = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'RV_SP');
 
-    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
-      await this.loadUnidades();
-    } else if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
-      await this.validarUnidad()
-    }
     const unidadCookie = this.serviceCookies.getCookie("unidad");
     const vigenciaCookie = this.serviceCookies.getCookie("vigencia");
     const planCookie = this.serviceCookies.getCookie("plan");
@@ -165,7 +185,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     }
 
     // dependencia_id, vigencia_id, nombre, version
-    this.activatedRoute.params.subscribe(async (prm) => {
+    this.routeSubscription = this.activatedRoute.params.subscribe(async (prm) => {
       let dependencia_id = prm['dependencia_id'];
       let vigencia_id = prm['vigencia_id'];
       let nombre = prm['nombre'];
@@ -175,6 +195,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         vigencia_id != undefined &&
         nombre != undefined
       ) {
+        this.fromUrl = true;
         await this.cargarPlan({
           dependencia_id,
           vigencia_id,
@@ -199,6 +220,12 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.serviceCookies.deleteCookie("unidad");
       this.serviceCookies.deleteCookie("vigencia");
       this.serviceCookies.deleteCookie("plan");
+    }
+    if (this.routeSubscription) {
+      this.routeSubscription.unsubscribe();
+    }
+    if (this.fromUrl) {
+      window.location.reload();
     }
   }
 
@@ -259,7 +286,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         unidades_interes: JSON.stringify([unidad_interes]),
         planes_interes: JSON.stringify([plan_interes]),
         periodo_id: this.vigencia.Id.toString(),
-        tipo_seguimiento_id: this.codigosService.getId(TIPO.SeguimientoFormulacion)
+        tipo_seguimiento_id: await this.codigosService.getId("PLANES_CRUD", "tipo-seguimiento", "F_SP")
       }
       await new Promise((resolve, reject) => {
         this.request
@@ -437,7 +464,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         if (data) {
           // No se puede traer filtrado desde PLANES_CRUD, al parecer excede la cantidad de parametros
           let planes = (data.Data as Plan[]).filter(
-            (p) => p.tipo_plan_id != this.codigosService.getId(TIPO.PlanProyecto)
+            async (p) => p.tipo_plan_id != await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PR_SP')
           );
           this.planes = []
           planes.forEach(plan => {
@@ -474,7 +501,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     const periodo_seguimiento = {
       unidades_interes: JSON.stringify([unidad_interes]),
       periodo_id: this.vigencia.Id.toString(),
-      tipo_seguimiento_id: this.codigosService.getId(TIPO.SeguimientoFormulacion)
+      tipo_seguimiento_id: await this.codigosService.getId("PLANES_CRUD", "tipo-seguimiento", "F_SP")
     }
     return await new Promise<(Plan | PlanInteres)[]>((resolve, reject) => {
       this.request
@@ -846,7 +873,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
       // Cuando el plan pasa de formulación a seguimiento
       if (this.codigoNotificacion == "FPA2") {
-        this.codigoNotificacion = "S"; // NOTIFICACION(S)
+        this.codigoNotificacion = "FS"; // NOTIFICACION(FS)
         this.enviarNotificacion();
       }
       this.codigoNotificacion = "";
@@ -858,6 +885,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       (data: DataRequest) => {
         if (data) {
           this.estadoPlan = (data.Data as EstadoPlan).nombre;
+          this.codigo_abreviacion = data.Data.codigo_abreviacion;
           this.getIconEstado();
           this.visualizeObs();
           this.enviarNotificacion();
@@ -875,21 +903,21 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   getIconEstado() {
-    if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoEnFormulacion)) {
+    if (this.plan.estado_plan_id == this.ID_ESTADO_EN_FORMULACION) {
       this.iconEstado = "create";
-    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoFormulado)) {
+    } else if (this.plan.estado_plan_id == this.ID_ESTADO_FORMULADO) {
       this.iconEstado = "assignment_turned_in";
-    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoEnRevision)) {
+    } else if (this.plan.estado_plan_id == this.ID_ESTADO_EN_REVISION) {
       this.iconEstado = "pageview";
-    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoRevisado)) {
+    } else if (this.plan.estado_plan_id == this.ID_ESTADO_REVISADO) {
       this.iconEstado = "assignment_return";
-    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoPreAval)) {
+    } else if (this.plan.estado_plan_id == this.ID_ESTADO_PRE_AVAL) {
       this.iconEstado = "done";
-    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoAval)) {
+    } else if (this.plan.estado_plan_id == this.ID_ESTADO_AVAL) {
       this.iconEstado = "done_all"
-    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoAjustePresupuestal)) {
+    } else if (this.plan.estado_plan_id == this.ID_ESTADO_AJUSTE_PRESUPUESTAL) {
       this.iconEstado = "build";
-    } else if (this.plan.estado_plan_id == this.codigosService.getId(TIPO.EstadoRevisionVerificada)) {
+    } else if (this.plan.estado_plan_id == this.ID_ESTADO_REVISION_VERIFICADA) {
       this.iconEstado = "spellcheck";
     }
   }
@@ -993,7 +1021,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   ajustarData(planRecienCreado: boolean) {
-    if (this.rol == 'PLANEACION' || this.plan.estado_plan_id != this.codigosService.getId(TIPO.EstadoEnFormulacion)) {
+    if (this.rol == 'PLANEACION' || this.plan.estado_plan_id != this.ID_ESTADO_EN_FORMULACION) {
       this.iconEditar = 'search'
     } else if (this.rol == 'JEFE_DEPENDENCIA' || this.rol == 'ASISTENTE_DEPENDENCIA') {
       this.iconEditar = 'edit'
@@ -1115,6 +1143,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         title: 'Cargando información',
         timerProgressBar: true,
         showConfirmButton: false,
+        allowOutsideClick: false,
         willOpen: () => {
           Swal.showLoading();
         },
@@ -1177,6 +1206,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true,
       confirmButtonText: `Si`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
     }).then((result) => {
       if (result.isConfirmed) {
         this.request
@@ -1235,8 +1265,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.dataArmonizacionPI = [];
   }
 
-  identificarContratistas() {
-    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${this.codigosService.getId(TIPO.IdentificacionContratistas)}`).subscribe((data: DataRequest) => {
+  async identificarContratistas() {
+    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP')}`).subscribe(async (data: DataRequest) => {
       if ((data.Data as any[]).length == 0) {
         var str1 = 'Identificación de Contratistas ' + this.plan.nombre
         var str2 = 'Identificación de Contratistas ' + this.plan.nombre + ' ' + this.unidad.Nombre
@@ -1245,7 +1275,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           "descripcion": str2,
           "plan_id": this.plan._id,
           "dato": "{}",
-          "tipo_identificacion_id": this.codigosService.getId(TIPO.IdentificacionContratistas),
+          "tipo_identificacion_id": await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP'),
           "activo": true
         }
         this.request.post(environment.PLANES_CRUD, `identificacion`, datoIdenti).subscribe((dataP: DataRequest) => {
@@ -1266,8 +1296,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     })
   }
 
-  identificarRecursos() {
-    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${this.codigosService.getId(TIPO.IdentificacionRecursos)}`).subscribe((data: DataRequest) => {
+  async identificarRecursos() {
+    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IR_SP')}`).subscribe(async (data: DataRequest) => {
       if ((data.Data as any[]).length == 0) {
         var str1 = 'Identificación de Recursos ' + this.plan.nombre
         var str2 = 'Identificación de Recursos ' + this.plan.nombre + ' ' + this.unidad.Nombre
@@ -1276,7 +1306,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           "descripcion": String(str2),
           "plan_id": String(this.plan._id),
           "dato": "{}",
-          "tipo_identificacion_id": this.codigosService.getId(TIPO.IdentificacionRecursos),
+          "tipo_identificacion_id": await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IR_SP'),
           "activo": true
         }
         this.request.post(environment.PLANES_CRUD, `identificacion`, datoIdenti).subscribe((dataP: DataRequest) => {
@@ -1297,16 +1327,16 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     })
   }
 
-  identificarDocentes() {
+  async identificarDocentes() {
 
-    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${this.codigosService.getId(TIPO.IdentificacionDocentes)}`).subscribe((data: DataRequest) => {
+    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP')}`).subscribe(async (data: DataRequest) => {
       if ((data.Data as any[]).length == 0) {
         let datoIdenti = {
           "nombre": `Identificación de Docentes ${this.plan.nombre}`,
           "descripcion": `Identificación de Docentes ${this.plan.nombre} ${this.unidad.Nombre}`,
           "plan_id": this.plan._id,
           "dato": "{}",
-          "tipo_identificacion_id": this.codigosService.getId(TIPO.IdentificacionDocentes),
+          "tipo_identificacion_id": await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP'),
           "activo": false
         }
         this.request.post(environment.PLANES_CRUD, `identificacion`, datoIdenti).subscribe((dataP: DataRequest) => {
@@ -1328,22 +1358,28 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   cargarPlanesDesarrollo() {
-    this.request.get(environment.PLANES_CRUD, `plan?query=activo:true,tipo_plan_id:${this.codigosService.getId(TIPO.PlanDesarrolloEstrategico)}`).subscribe((data: DataRequest) => {
-      if (data) {
-        this.planesDesarrollo = data.Data;
-        this.formArmonizacion.get('selectPED')!.setValue(this.planesDesarrollo[0])
-        this.onChangePD(this.planesDesarrollo[0]);
-      }
+    return new Promise(async (resolve) => {
+      this.request.get(environment.PLANES_CRUD, `plan?query=activo:true,tipo_plan_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PD_SP')}`).subscribe((data: DataRequest) => {
+        if (data) {
+          this.planesDesarrollo = data.Data;
+          this.formArmonizacion.get('selectPED')!.setValue(this.planesDesarrollo[0])
+          this.onChangePD(this.planesDesarrollo[0]);
+          resolve(this.planesDesarrollo);
+        }
+      })
     })
   }
 
   cargarPlanesIndicativos() {
-    this.request.get(environment.PLANES_CRUD, `plan?query=tipo_plan_id:${this.codigosService.getId(TIPO.PlanIndicativo)}`).subscribe((data: DataRequest) => {
-      if (data) {
-        this.planesIndicativos = data.Data;
-        this.formArmonizacion.get('selectPI')!.setValue(this.planesIndicativos[0])
-        this.onChangePI(this.planesIndicativos[0]);
-      }
+    return new Promise(async (resolve) => {
+      this.request.get(environment.PLANES_CRUD, `plan?query=tipo_plan_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PLI_SP')}`).subscribe((data: DataRequest) => {
+        if (data) {
+          this.planesIndicativos = data.Data;
+          this.formArmonizacion.get('selectPI')!.setValue(this.planesIndicativos[0])
+          this.onChangePI(this.planesIndicativos[0]);
+          resolve(this.planesIndicativos);
+        }
+      })
     })
   }
 
@@ -1404,6 +1440,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true,
       confirmButtonText: `Si`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
     }).then((result) => {
       if (result.isConfirmed) {
         this.addActividad = false;
@@ -1437,6 +1474,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         showCancelButton: true,
         confirmButtonText: `Si`,
         cancelButtonText: `No`,
+        allowOutsideClick: false,
       }).then(
         (result) => {
           if (result.isConfirmed) {
@@ -1495,10 +1533,11 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               icon: 'warning',
               confirmButtonText: `Si`,
               cancelButtonText: `No`,
+              allowOutsideClick: false,
               showCancelButton: true
             }).then((result) => {
               if (result.isConfirmed) {
-                this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoFormulado);
+                this.plan.estado_plan_id = this.ID_ESTADO_FORMULADO;
                 this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id).subscribe((data: DataRequest) => {
                   if (data) {
                     this.codigoNotificacion = "FEF"; // NOTIFICACION(FEF)
@@ -1551,7 +1590,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     return new Promise<string>((resolve) => {
       this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/actividad/ponderacion/${this.plan._id}`).subscribe((data: DataRequest) => {
         let message: string = "";
-        if (data) {
+        if (data && data.Success) {
           type Data = { [key: string]: any };
           let aux: Data = data.Data;
           let keys: string[];
@@ -1569,19 +1608,20 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           resolve(message);
         } else {
           Swal.fire({
-            title:
-              "Error en solicitud de cálculo de ponderación, por favor contactarse con el administrador del sistema.",
-            icon: "error",
+            title: 'Error en solicitud de cálculo de ponderación, por favor contactarse con el administrador del sistema.',
+            icon: 'error',
+            text: 'El formato del plan construido, presenta fallas.',
             showConfirmButton: false,
-            timer: 2500,
-          });
+            timer: 3500
+          })
         }
       }, (error) => {
         Swal.fire({
           title: 'Error en solicitud de cálculo de ponderación, por favor contactarse con el administrador del sistema.',
           icon: 'error',
+          text: 'El formato del plan construido, presenta fallas.',
           showConfirmButton: false,
-          timer: 2500
+          timer: 3500
         })
       })
     });
@@ -1594,10 +1634,11 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Continuar`,
       cancelButtonText: `Cancelar`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
-        this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoEnRevision);
+        this.plan.estado_plan_id = this.ID_ESTADO_EN_REVISION;
         this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id).subscribe((data: DataRequest) => {
           if (data) {
             this.codigoNotificacion = "FF"; // NOTIFICACION(FF)
@@ -1645,10 +1686,11 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
-        this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoRevisado);
+        this.plan.estado_plan_id = this.ID_ESTADO_REVISADO;
         this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id).subscribe((data: DataRequest) => {
           if (data) {
             this.codigoNotificacion = "FER"; // NOTIFICACION(FER)
@@ -1690,6 +1732,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: "warning",
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true,
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1702,7 +1745,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           showCancelButton: true
         }).then((result) => {
           if (result.isConfirmed) {
-            this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoRevisionVerificada);
+            this.plan.estado_plan_id = this.ID_ESTADO_REVISION_VERIFICADA;
             this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id)
               .subscribe((data: DataRequest) => {
                 if (data) {
@@ -1755,6 +1798,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1811,10 +1855,11 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
-        this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoPreAval);
+        this.plan.estado_plan_id = this.ID_ESTADO_PRE_AVAL;
         this.request.put(environment.PLANES_CRUD, `plan`, this.plan, this.plan._id).subscribe((data: DataRequest) => {
           if (data) {
             this.codigoNotificacion = "FV"; // NOTIFICACION(FV)
@@ -1857,6 +1902,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: "warning",
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true,
     }).then(
       // @ts-ignore
@@ -1881,7 +1927,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                       showConfirmButton: false,
                       timer: 2500,
                     }).then(() => {
-                      this.plan.estado_plan_id = this.codigosService.getId(TIPO.EstadoAval);
+                      this.plan.estado_plan_id = this.ID_ESTADO_AVAL;
                       this.busquedaPlanes(this.plan);
                       this.loadData();
                       this.addActividad = false;
