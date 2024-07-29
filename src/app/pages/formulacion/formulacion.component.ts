@@ -164,7 +164,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   dataSource!: MatTableDataSource<Actividad>;
 
   async ngOnInit() {
-    this.enviarNotificacion();
     this.ID_ESTADO_EN_FORMULACION = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'EF_SP');
     this.ID_ESTADO_FORMULADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'F_SP');
     this.ID_ESTADO_EN_REVISION = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'ER_SP');
