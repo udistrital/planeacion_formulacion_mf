@@ -357,7 +357,7 @@
                   *ngIf="!last" matStepperNext (click)="nextStep(index)">Siguiente</button>
                 <br><br>
                 <button mat-raised-button class="btn-formato" color="primary" style="color:white;" type="submit" class="col-3 mt-2 mb-3"
-                  (click)="ocultar()" [disabled]="codigo_abreviacion === 'A_SP'"  (click)="cancelar()">Cancelar</button>
+                  (click)="ocultar()" [disabled]="codigo_abreviacion === 'A_SP'">Cancelar</button>
                 <button mat-raised-button class="btn-formato" color="primary" style="color:white;" type="submit" class="col-3 mt-2 mb-3"
                   *ngIf="last" [disabled]="codigo_abreviacion === 'A_SP' || !form.valid" (click)="submit()">Guardar</button>
                 <!-- <button *ngIf="index !== 0" matStepperPrevious class="btn btn-primary" type="button" (click)="prevStep(index)">Atrás</button>
