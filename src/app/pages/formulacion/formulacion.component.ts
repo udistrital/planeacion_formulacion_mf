@@ -31,10 +31,10 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   ID_ESTADO_FORMULADO!: string;
   ID_ESTADO_EN_REVISION!: string;
   ID_ESTADO_REVISADO!: string;
-  ID_ESTADO_PRE_AVAL!:string;
-  ID_ESTADO_AVAL!:string;
-  ID_ESTADO_AJUSTE_PRESUPUESTAL!:string;
-  ID_ESTADO_REVISION_VERIFICADA!:string;
+  ID_ESTADO_PRE_AVAL!: string;
+  ID_ESTADO_AVAL!: string;
+  ID_ESTADO_AJUSTE_PRESUPUESTAL!: string;
+  ID_ESTADO_REVISION_VERIFICADA!: string;
 
   activedStep = 0;
   form!: FormGroup;
@@ -107,6 +107,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+  codigo_abreviacion: any;
 
   private codigosService = new CodigosService();
 
@@ -148,13 +149,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     } else if (roles.__zone_symbol__value.find((x: any) => x == 'ASISTENTE_PLANEACION')) {
       this.rol = 'ASISTENTE_PLANEACION';
     } else if (
-      roles.__zone_symbol__value.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')){
+      roles.__zone_symbol__value.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
       this.rol = 'JEFE_DEPENDENCIA';
     }
 
-    if(this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       this.loadUnidades();
-    }else if (this.rol == 'JEFE_DEPENDENCIA') {
+    } else if (this.rol == 'JEFE_DEPENDENCIA') {
       this.validarUnidad();
     }
   }
@@ -872,7 +873,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
       // Cuando el plan pasa de formulación a seguimiento
       if (this.codigoNotificacion == "FPA2") {
-        this.codigoNotificacion = "S"; // NOTIFICACION(S)
+        this.codigoNotificacion = "FS"; // NOTIFICACION(FS)
         this.enviarNotificacion();
       }
       this.codigoNotificacion = "";
@@ -884,6 +885,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       (data: DataRequest) => {
         if (data) {
           this.estadoPlan = (data.Data as EstadoPlan).nombre;
+          this.codigo_abreviacion = data.Data.codigo_abreviacion;
           this.getIconEstado();
           this.visualizeObs();
           this.enviarNotificacion();
@@ -1147,6 +1149,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         title: 'Cargando información',
         timerProgressBar: true,
         showConfirmButton: false,
+        allowOutsideClick: false,
         willOpen: () => {
           Swal.showLoading();
         },
@@ -1209,6 +1212,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true,
       confirmButtonText: `Si`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
     }).then((result) => {
       if (result.isConfirmed) {
         this.request
@@ -1360,7 +1364,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   cargarPlanesDesarrollo() {
-    return new Promise(async(resolve) =>{
+    return new Promise(async (resolve) => {
       this.request.get(environment.PLANES_CRUD, `plan?query=activo:true,tipo_plan_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PD_SP')}`).subscribe((data: DataRequest) => {
         if (data) {
           this.planesDesarrollo = data.Data;
@@ -1373,7 +1377,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   cargarPlanesIndicativos() {
-    return new Promise(async(resolve)=>{
+    return new Promise(async (resolve) => {
       this.request.get(environment.PLANES_CRUD, `plan?query=tipo_plan_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PLI_SP')}`).subscribe((data: DataRequest) => {
         if (data) {
           this.planesIndicativos = data.Data;
@@ -1442,6 +1446,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true,
       confirmButtonText: `Si`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
     }).then((result) => {
       if (result.isConfirmed) {
         this.addActividad = false;
@@ -1475,6 +1480,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         showCancelButton: true,
         confirmButtonText: `Si`,
         cancelButtonText: `No`,
+        allowOutsideClick: false,
       }).then(
         (result) => {
           if (result.isConfirmed) {
@@ -1533,6 +1539,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               icon: 'warning',
               confirmButtonText: `Si`,
               cancelButtonText: `No`,
+              allowOutsideClick: false,
               showCancelButton: true
             }).then((result) => {
               if (result.isConfirmed) {
@@ -1589,7 +1596,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     return new Promise<string>((resolve) => {
       this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/actividad/ponderacion/${this.plan._id}`).subscribe((data: DataRequest) => {
         let message: string = "";
-        if (data) {
+        if (data && data.Success) {
           type Data = { [key: string]: any };
           let aux: Data = data.Data;
           let keys: string[];
@@ -1607,19 +1614,20 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           resolve(message);
         } else {
           Swal.fire({
-            title:
-              "Error en solicitud de cálculo de ponderación, por favor contactarse con el administrador del sistema.",
-            icon: "error",
+            title: 'Error en solicitud de cálculo de ponderación, por favor contactarse con el administrador del sistema.',
+            icon: 'error',
+            text: 'El formato del plan construido, presenta fallas.',
             showConfirmButton: false,
-            timer: 2500,
-          });
+            timer: 3500
+          })
         }
       }, (error) => {
         Swal.fire({
           title: 'Error en solicitud de cálculo de ponderación, por favor contactarse con el administrador del sistema.',
           icon: 'error',
+          text: 'El formato del plan construido, presenta fallas.',
           showConfirmButton: false,
-          timer: 2500
+          timer: 3500
         })
       })
     });
@@ -1632,6 +1640,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Continuar`,
       cancelButtonText: `Cancelar`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1683,6 +1692,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1728,6 +1738,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: "warning",
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true,
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1793,6 +1804,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1849,6 +1861,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1895,6 +1908,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: "warning",
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true,
     }).then(
       // @ts-ignore

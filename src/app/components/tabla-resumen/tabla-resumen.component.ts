@@ -85,6 +85,7 @@ export class TablaResumenComponent implements OnInit, AfterViewInit {
       title: 'Cargando planes en formulación',
       timerProgressBar: true,
       showConfirmButton: false,
+      allowOutsideClick: false,
       willOpen: () => {
         Swal.showLoading();
       },
