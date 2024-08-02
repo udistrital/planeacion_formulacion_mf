@@ -1033,6 +1033,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       };
       if (data_source != null) {
         this.dataSource = new MatTableDataSource(data_source);
+        this.pintarActividades(this.plan._id, data.Data.data_source, data.Data.data_source.length);
         this.displayedColumns = displayed_columns as string[];
         this.columnsToDisplay = this.displayedColumns.slice();
         this.dataSource.paginator = this.paginator;
@@ -2033,5 +2034,68 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       },
     });
+  }
+
+  pintarActividades(plan_id: string, actividades: any, numero_actividades: any): any {
+    let promesas = [];
+
+    Swal.fire({
+      title: 'Cargando...',
+      timerProgressBar: true,
+      showConfirmButton: false,
+      allowEscapeKey: false,
+      allowOutsideClick: false,
+      willOpen: () => {
+        Swal.showLoading();
+      },
+    })
+
+    for (var i = 0; i < numero_actividades; i++) {
+      promesas.push(new Promise((PromesaResolve, PromesaReject) => {
+        this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/plan/` + plan_id + `/` + (i + 1)).subscribe((data: any) => {
+          if (data.Success && data.Data != null && data != null) {
+            PromesaResolve(data.Data[1][0]);
+          } else {
+            Swal.fire({
+              title: 'Atención en la operación',
+              text: `No se pudo consultar el contenido de las actividades`,
+              icon: 'warning',
+              showConfirmButton: false,
+              timer: 3500
+            })
+            PromesaReject();
+          }
+        }, (error) => {
+          Swal.fire({
+            title: 'Atención en la operación',
+            text: `No se pudo consultar el contenido de las actividades`,
+            icon: 'warning',
+            showConfirmButton: false,
+            timer: 3500
+          })
+          PromesaReject();
+        })
+      }));
+    }
+    Promise.all(promesas).then((contenido_actividades: any) => {
+      let observaciones = false;
+
+      for (var i = 0; i < contenido_actividades.length; i++) {
+        for (let key in contenido_actividades[i]) {
+          if (key.slice(-2) == "_o" && (contenido_actividades[i][key] != "" && contenido_actividades[i][key] != "Sin observación")) {
+            observaciones = true;
+          }
+        }
+
+        if (observaciones) {
+          actividades[i].color = "ConObservaciones"
+        } else {
+          actividades[i].color = "SinObservaciones"
+        }
+        observaciones = false;
+      }
+      this.dataSource = new MatTableDataSource(actividades);
+      Swal.close();
+    })
   }
 }
