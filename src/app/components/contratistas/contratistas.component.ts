@@ -1,6 +1,6 @@
 import { formatCurrency, getCurrencySymbol } from '@angular/common';
 import { Component, EventEmitter, Input, OnInit, Output, ViewChild } from '@angular/core';
-import { FormGroup } from '@angular/forms';
+import { FormGroup, FormControl } from '@angular/forms';
 import { FloatLabelType } from '@angular/material/form-field';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
@@ -15,6 +15,8 @@ import { environment } from 'src/environments/environment';
 import Swal from 'sweetalert2';
 import { rubros_aux } from '../recursos/rubros';
 import { CodigosService } from '@udistrital/planeacion-utilidades-module';
+import { Observable } from 'rxjs';
+import { startWith, map } from 'rxjs/operators';
 
 @Component({
   selector: 'app-contratistas',
@@ -48,6 +50,8 @@ export class ContratistasComponent implements OnInit {
   vigenciaConsulta: any;
   rubros = rubros_aux
   totalInc!: number;
+  rubroControl = new FormControl();
+  filteredRubros!: Observable<any[]>;
 
   CODIGO_ESTADO_PRE_AVAL!: string;
   CODIGO_ESTADO_REVISADO!: string;
@@ -69,7 +73,7 @@ export class ContratistasComponent implements OnInit {
   ) { }
 
   async ngOnInit() {
-    this.CODIGO_ESTADO_PRE_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'PA_SP')
+    this.CODIGO_ESTADO_PRE_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'PA_SP');
     this.CODIGO_ESTADO_REVISADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'R_SP');
     this.loadPlan();
     this.dataSource = new MatTableDataSource<any>();
@@ -77,6 +81,16 @@ export class ContratistasComponent implements OnInit {
     this.actividades = this.dataSourceActividades.data;
     this.loadTabla();
     this.loadVigenciaConsulta();
+
+    this.filteredRubros = this.rubroControl.valueChanges.pipe(
+      startWith(''),
+      map(value => this._filterRubros(value))
+    );
+  }
+
+  private _filterRubros(value: string): any[] {
+    const filterValue = value.toLowerCase();
+    return this.rubros.filter(rubro => rubro.Nombre.toLowerCase().includes(filterValue) || rubro.Codigo.toLowerCase().includes(filterValue));
   }
 
   loadPlan() {
