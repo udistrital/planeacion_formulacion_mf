@@ -1359,10 +1359,25 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   cargarPlanesDesarrollo() {
+    let vigencia = {
+      Id: this.vigencia.Id,
+      Nombre: this.vigencia.Nombre
+    }
     return new Promise(async (resolve) => {
       this.request.get(environment.PLANES_CRUD, `plan?query=activo:true,tipo_plan_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PD_SP')}`).subscribe((data: DataRequest) => {
         if (data) {
-          this.planesDesarrollo = data.Data;
+          let planesDesarrolloSinFiltro = data.Data;
+          let planesDesarrolloFiltrados: any[] = [];
+          planesDesarrolloSinFiltro.filter((plan: any) => {
+            if (plan.vigencia_aplica) {
+              let vigencia_aplica = JSON.parse(plan.vigencia_aplica);
+              const existe = vigencia_aplica.some((item: any) => item.Id === vigencia.Id && item.Nombre === vigencia.Nombre);
+              if (existe) {
+                planesDesarrolloFiltrados.push(plan);
+              };
+            };
+          });
+          this.planesDesarrollo = planesDesarrolloFiltrados;
           this.formArmonizacion.get('selectPED')!.setValue(this.planesDesarrollo[0])
           this.onChangePD(this.planesDesarrollo[0]);
           resolve(this.planesDesarrollo);
@@ -1372,10 +1387,25 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   cargarPlanesIndicativos() {
+    let vigencia = {
+      Id: this.vigencia.Id,
+      Nombre: this.vigencia.Nombre
+    }
     return new Promise(async (resolve) => {
       this.request.get(environment.PLANES_CRUD, `plan?query=tipo_plan_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PLI_SP')}`).subscribe((data: DataRequest) => {
         if (data) {
-          this.planesIndicativos = data.Data;
+          let planesIndicativosSinFiltro = data.Data;
+          let planesIndicativosFiltrados: any[] = [];
+          planesIndicativosSinFiltro.filter((plan: any) => {
+            if (plan.vigencia_aplica) {
+              let vigencia_aplica = JSON.parse(plan.vigencia_aplica);
+              const existe = vigencia_aplica.some((item: any) => item.Id === vigencia.Id && item.Nombre === vigencia.Nombre);
+              if (existe) {
+                planesIndicativosFiltrados.push(plan);
+              };
+            };
+          });
+          this.planesIndicativos = planesIndicativosFiltrados;
           this.formArmonizacion.get('selectPI')!.setValue(this.planesIndicativos[0])
           this.onChangePI(this.planesIndicativos[0]);
           resolve(this.planesIndicativos);
