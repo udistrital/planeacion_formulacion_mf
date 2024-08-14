@@ -103,7 +103,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   private serviceCookies = new ServiceCookies();
   private autenticationService = new ImplicitAutenticationService();
   private routeSubscription!: Subscription;
-  fromUrl!: boolean;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -118,7 +117,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     private notificacionesService: Notificaciones,
     private activatedRoute: ActivatedRoute,
   ) {
-    this.loadPeriodos();
     this.formArmonizacion = this.formBuilder.group({
       selectPED: ['',],
       selectPI: ['',]
@@ -141,9 +139,14 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.moduloVisible = false;
     this.isChecked = true;
     this.pendienteCheck = false;
+  }
 
+  displayedColumns: string[] = [];
+  columnsToDisplay: string[] = []
+  dataSource!: MatTableDataSource<Actividad>;
+
+  async ngOnInit() {
     let roles: any = this.autenticationService.getRoles();
-
     if (roles.__zone_symbol__value.find((x: any) => x == 'PLANEACION')) {
       this.rol = 'PLANEACION';
     } else if (roles.__zone_symbol__value.find((x: any) => x == 'ASISTENTE_PLANEACION')) {
@@ -154,17 +157,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     }
 
     if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
-      this.loadUnidades();
+      await this.loadUnidades();
     } else if (this.rol == 'JEFE_DEPENDENCIA') {
-      this.validarUnidad();
+      await this.validarUnidad();
     }
-  }
 
-  displayedColumns: string[] = [];
-  columnsToDisplay: string[] = []
-  dataSource!: MatTableDataSource<Actividad>;
+    await this.loadPeriodos();
 
-  async ngOnInit() {
     this.ID_ESTADO_EN_FORMULACION = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'EF_SP');
     this.ID_ESTADO_FORMULADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'F_SP');
     this.ID_ESTADO_EN_REVISION = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'ER_SP');
@@ -195,7 +194,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         vigencia_id != undefined &&
         nombre != undefined
       ) {
-        this.fromUrl = true;
         await this.cargarPlan({
           dependencia_id,
           vigencia_id,
@@ -223,9 +221,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     }
     if (this.routeSubscription) {
       this.routeSubscription.unsubscribe();
-    }
-    if (this.fromUrl) {
-      window.location.reload();
     }
   }
 
@@ -339,69 +334,76 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     return
   }
 
-  async validarUnidad() {
-    return await new Promise<Dependencia[]>((resolve, reject) => {
-      this.autenticationService.getDocumento().then((documento: any) => {
-        this.request
-          .get(
-            environment.TERCEROS_SERVICE,
-            `datos_identificacion/?query=Numero:${documento}`
-          )
-          .subscribe((datosInfoTercero: InfoTercero[]) => {
-            this.request
-              .get(
-                environment.PLANEACION_FORMULACION_MID,
-                `formulacion/tercero/${datosInfoTercero[0].TerceroId.Id}`
-              )
-              .subscribe(async (vinculacion: DataRequest) => {
-                if (vinculacion.Data != null) {
-                  const vinculaciones: TerceroFormulacion[] = vinculacion.Data;
-                  for (let aux = 0; aux < vinculaciones.length; aux++) {
-                    const vinculacion = vinculaciones[aux];
-                    await new Promise<Dependencia[]>((resolve, reject) => {
-                      this.request
-                        .get(
-                          environment.OIKOS_SERVICE,
-                          `dependencia_tipo_dependencia?query=DependenciaId:${vinculacion.DependenciaId}`
-                        )
-                        .subscribe((dataUnidad: DependenciaTipoDependencia[]) => {
-                          if (dataUnidad) {
-                            let unidad = dataUnidad[0].DependenciaId;
-                            unidad.TipoDependencia =
-                              dataUnidad[0].TipoDependenciaId.Id;
-                            for (let i = 0; i < dataUnidad.length; i++) {
-                              if (dataUnidad[i].TipoDependenciaId.Id === 2) {
-                                unidad.TipoDependencia =
-                                  dataUnidad[i].TipoDependenciaId.Id;
-                              }
-                            }
-                            if (!this.unidades.find((u) => u.Id === unidad.Id)) {
-                              this.unidades.push(unidad);
-                              this.auxUnidades.push(unidad);
-                            }
-                            this.moduloVisible = true;
-                            resolve(this.unidades)
-                          }
-                        });
-                    })
-                  }
-                  this.unidades = this.unidades.sort((a, b) => (a.Id < b.Id ? -1 : 1));
-                  resolve(this.unidades);
-                } else {
-                  this.moduloVisible = false;
-                  Swal.fire({
-                    title: "Error en la operación",
-                    text: `No cuenta con los permisos requeridos para acceder a este módulo`,
-                    icon: "warning",
-                    showConfirmButton: false,
-                    timer: 4000,
-                  });
-                  reject();
-                }
-              });
-          });
-      });
+  getDatosIdentificacion(documento: string): Promise<InfoTercero[]> {
+    return new Promise((resolve, reject) => {
+      this.request
+        .get(environment.TERCEROS_SERVICE, `datos_identificacion/?query=Numero:${documento}`)
+        .subscribe(
+          (response) => resolve(response),
+          (error) => reject(error)
+        );
     });
+  }
+
+  getVinculacionTercero(terceroId: number): Promise<DataRequest> {
+    return new Promise((resolve, reject) => {
+      this.request
+        .get(environment.PLANEACION_FORMULACION_MID, `formulacion/tercero/${terceroId}`)
+        .subscribe(
+          (response) => resolve(response),
+          (error) => reject(error)
+        );
+    });
+  }
+
+  getDependenciaTipoDependencia(dependenciaId: number): Promise<DependenciaTipoDependencia[]> {
+    return new Promise((resolve, reject) => {
+      this.request
+        .get(environment.OIKOS_SERVICE, `dependencia_tipo_dependencia?query=DependenciaId:${dependenciaId}`)
+        .subscribe(
+          (response) => resolve(response),
+          (error) => reject(error)
+        );
+    });
+  }
+
+  async validarUnidad() {
+    const documento: string = await this.autenticationService.getDocumento();
+    const datosInfoTercero: InfoTercero[] = await this.getDatosIdentificacion(documento);
+    const vinculacion: DataRequest = await this.getVinculacionTercero(datosInfoTercero[0].TerceroId.Id);
+
+    if (vinculacion.Data != null) {
+      const vinculaciones: TerceroFormulacion[] = vinculacion.Data;
+      for (let aux = 0; aux < vinculaciones.length; aux++) {
+        const vinculacion = vinculaciones[aux];
+        const dataUnidad: DependenciaTipoDependencia[] = await this.getDependenciaTipoDependencia(vinculacion.DependenciaId);
+
+        if (dataUnidad) {
+          let unidad = dataUnidad[0].DependenciaId;
+          unidad.TipoDependencia = dataUnidad[0].TipoDependenciaId.Id;
+          for (let i = 0; i < dataUnidad.length; i++) {
+            if (dataUnidad[i].TipoDependenciaId.Id === 2) {
+              unidad.TipoDependencia = dataUnidad[i].TipoDependenciaId.Id;
+            }
+          }
+          if (!this.unidades.find((u) => u.Id === unidad.Id)) {
+            this.unidades.push(unidad);
+            this.auxUnidades.push(unidad);
+          }
+          this.moduloVisible = true;
+        }
+      }
+      this.unidades = this.unidades.sort((a, b) => (a.Id < b.Id ? -1 : 1));
+    } else {
+      this.moduloVisible = false;
+      Swal.fire({
+        title: "Error en la operación",
+        text: `No cuenta con los permisos requeridos para acceder a este módulo`,
+        icon: "warning",
+        showConfirmButton: false,
+        timer: 4000,
+      });
+    }
   }
 
   async loadUnidades() {
@@ -434,20 +436,24 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     });
   }
 
-  loadPeriodos() {
-    this.request.get(environment.PARAMETROS_SERVICE, `periodo?query=CodigoAbreviacion:VG,activo:true`).subscribe((data: DataRequest) => {
-      if (data) {
-        this.vigencias = data.Data as Vigencia[];
-      }
-    }, (error) => {
-      Swal.fire({
-        title: 'Error en la operación',
-        text: `No se encontraron datos registrados ${JSON.stringify(error)}`,
-        icon: 'warning',
-        showConfirmButton: false,
-        timer: 2500
+  async loadPeriodos() {
+    return await new Promise((resolve, reject) => {
+      this.request.get(environment.PARAMETROS_SERVICE, `periodo?query=CodigoAbreviacion:VG,activo:true`).subscribe((data: DataRequest) => {
+        if (data) {
+          this.vigencias = data.Data as Vigencia[];
+          resolve(true);
+        }
+      }, (error) => {
+        Swal.fire({
+          title: 'Error en la operación',
+          text: `No se encontraron datos registrados ${JSON.stringify(error)}`,
+          icon: 'warning',
+          showConfirmButton: false,
+          timer: 2500
+        })
+        reject(error)
       })
-    })
+    });
   }
 
   async loadPlanes() {
