@@ -53,7 +53,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   planAux!: Plan;
   unidad!: Dependencia;
   vigencia!: Vigencia;
-  versionDesdeTabla!: number;
+  versionDesdeTabla!: number | undefined;
   steps!: Paso[];
   json: any;
   estado!: string;
@@ -67,10 +67,11 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   banderaIdentDocentes!: boolean;
   banderaUltimaVersion!: boolean;
   banderaEstadoDatos!: boolean;
-  tipoPlanId!: string;
-  idPadre!: string;
-  tipoPlanIndicativo!: string;
-  idPlanIndicativo!: string;
+  banderaRealizarAjustes!: boolean;
+  tipoPlanId!: any;
+  idPadre!: any;
+  tipoPlanIndicativo!: any;
+  idPlanIndicativo!: any;
   planesDesarrollo!: Plan[];
   planesIndicativos!: Plan[];
   planDSelected!: boolean;
@@ -173,6 +174,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.ID_ESTADO_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'A_SP');
     this.ID_ESTADO_AJUSTE_PRESUPUESTAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'AP_SP');
     this.ID_ESTADO_REVISION_VERIFICADA = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'RV_SP');
+    this.banderaRealizarAjustes = false;
 
     const unidadCookie = this.serviceCookies.getCookie("unidad");
     const vigenciaCookie = this.serviceCookies.getCookie("vigencia");
@@ -588,7 +590,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   submit() {
-    this.SwalCargando();
+    this.mostrarMensajeCarga();
     if (!this.banderaEdit) { // ADD NUEVA ACTIVIDAD
       if (this.dataArmonizacionPED.length != 0 && this.dataArmonizacionPI.length != 0) {
 
@@ -765,6 +767,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.estadoPlan = "";
       this.iconEstado = "";
       this.versionPlan = "";
+      this.versionDesdeTabla = undefined;
       this.banderaEstadoDatos = false;
       this.plan = plan;
       this.planAsignado = false;
@@ -931,20 +934,27 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           versiones.forEach((_, i) => {
             versiones[i].numero = (i + 1).toString();
           });
-          this.versiones = versiones;
-          this.plan =
-            this.versiones[
-            this.versionDesdeTabla == undefined || this.versionDesdeTabla > this.versiones.length
+          let indexToSelect: number;
+          if (this.banderaRealizarAjustes) {
+            indexToSelect = this.versiones.length - 1;
+            this.banderaRealizarAjustes = false;
+          } else {
+            indexToSelect = (this.versionDesdeTabla == undefined || this.versionDesdeTabla > this.versiones.length)
               ? this.versiones.length - 1
-              : this.versionDesdeTabla - 1
-            ];
+              : this.versionDesdeTabla - 1;
+          }
+          this.plan = this.versiones[indexToSelect];
           this.planAsignado = true;
           this.clonar = false;
-          this.banderaUltimaVersion = true;
           this.loadData(planRecienCreado);
           this.controlVersion = new FormControl(this.plan);
           this.versionPlan = this.plan.numero!;
           this.getEstado();
+          if (indexToSelect + 1 == this.versiones.length) {
+            this.banderaUltimaVersion = true;
+          } else {
+            this.banderaUltimaVersion = false;
+          }
         }
       }, (error) => {
         Swal.fire({
@@ -1173,6 +1183,10 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         })
       })
     }
+    this.idPadre = undefined;
+    this.tipoPlanId = undefined;
+    this.idPlanIndicativo = undefined;
+    this.tipoPlanIndicativo = undefined;
   }
 
   cleanBeforeLoad(): Promise<void> {
@@ -1685,12 +1699,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
             })
           }
         })
-        Swal.fire({
-          title: 'Estado actualizado (SIN CAMBIOS)',
-          icon: 'success',
-          showConfirmButton: false,
-          timer: 2500
-        })
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         Swal.fire({
           title: 'Inicio de Revisión Cancelado',
@@ -1823,6 +1831,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   realizarAjustes() {
+    this.banderaRealizarAjustes = true;
     Swal.fire({
       title: 'Realizar Ajustes',
       text: `¿Desea realizar ajustes al plan?`,

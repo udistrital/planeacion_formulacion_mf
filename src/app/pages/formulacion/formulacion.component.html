@@ -404,50 +404,50 @@
       </button>
       <ng-container *ngIf="banderaUltimaVersion">
         <ng-container *ngIf="rol == 'JEFE_DEPENDENCIA' || rol == 'ASISTENTE_DEPENDENCIA'">
-          <button class="btn-formulacion" *ngIf="plan.estado_plan_id == '614d3ad301c7a200482fabfd'" mat-raised-button
+          <button class="btn-formulacion" *ngIf="plan.estado_plan_id == ID_ESTADO_EN_FORMULACION" mat-raised-button
             color="primary" style="color:white;" (click)="culminarPlan()" [disabled]="!dataT">
             Culminar plan
           </button>
         </ng-container>
         <ng-container *ngIf="rol == 'PLANEACION' || rol == 'ASISTENTE_PLANEACION'">
-          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3aeb01c7a245952fabff'" mat-raised-button
+          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === ID_ESTADO_FORMULADO" mat-raised-button
             color="primary" style="color:white;" (click)="iniciarRevision()" [disabled]="!dataT">
             Iniciar Revisión
           </button>
         </ng-container>
         <ng-container *ngIf="rol == 'PLANEACION' || rol == 'ASISTENTE_PLANEACION'">
-          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3b0301c7a2a44e2fac01'" mat-raised-button
+          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === ID_ESTADO_EN_REVISION" mat-raised-button
             color="primary" style="color:white;" (click)="enviarRevision()" [disabled]="!dataT">
             Enviar Revisión
           </button>
         </ng-container>
         <ng-container *ngIf="rol == 'JEFE_DEPENDENCIA'">
-          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3b1e01c7a265372fac03'" mat-raised-button
+          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === ID_ESTADO_REVISADO" mat-raised-button
             color="primary" style="color:white;" (click)="verificarRevision()" [disabled]="!dataT"> <!--AGREGAR ID-->
             Verificar Revisión
           </button>
         </ng-container>
         <ng-container *ngIf="rol == 'JEFE_DEPENDENCIA'">
           <button class="btn-formulacion"
-            *ngIf="plan.estado_plan_id === '614d3b1e01c7a265372fac03' || plan.estado_plan_id === '615335c501c7a213a12fb2a3'"
+            *ngIf="plan.estado_plan_id === ID_ESTADO_REVISADO"
             mat-raised-button color="primary" style="color:white;" (click)="realizarAjustes()" [disabled]="!dataT">
             Realizar Ajustes
           </button>
         </ng-container>
         <ng-container *ngIf="rol == 'PLANEACION'">
-          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '65bbf86918f02a27a456d20f'" mat-raised-button
+          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === ID_ESTADO_REVISION_VERIFICADA" mat-raised-button
             color="primary" style="color:white;" (click)="preAval()" [disabled]="!dataT">
             Dar Pre-Aval
           </button>
         </ng-container>
         <ng-container *ngIf="rol == 'PLANEACION'">
-          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3b4401c7a222052fac05'" mat-raised-button
+          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === ID_ESTADO_PRE_AVAL" mat-raised-button
             color="primary" style="color:white;" (click)="realizarAjustes()" [disabled]="!dataT">
             Remitir Ajuste Plan de Acción
           </button>
         </ng-container>
         <ng-container *ngIf="rol == 'PLANEACION'">
-          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === '614d3b4401c7a222052fac05'" mat-raised-button
+          <button class="btn-formulacion" *ngIf="plan.estado_plan_id === ID_ESTADO_PRE_AVAL" mat-raised-button
             color="primary" style="color:white;" (click)="avalar()" [disabled]="!dataT">
             Dar Aval
           </button>
