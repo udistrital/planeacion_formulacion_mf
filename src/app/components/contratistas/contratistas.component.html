@@ -13,12 +13,15 @@
     <form #myForm="ngForm" (ngSubmit)="submit(myForm)">
       <ng-container>
         <div class="label-rubro">Rubro:
-          <mat-select class="form-control" [(value)]="rubroSeleccionado" [disabled]="estadoPlan !== 'En formulación'">
-            <mat-option>--</mat-option>
-            <mat-option class="multiline-mat-option" *ngFor="let rubro of rubros" [value]="rubro">
-              {{rubro.Codigo}} - {{rubro.Nombre}}
-            </mat-option>
-          </mat-select>
+          <mat-form-field>
+            <mat-select [(value)]="rubroSeleccionado" [disabled]="estadoPlan !== 'En formulación'">
+            <input [formControl]="rubroControl" class="input-search">
+              <mat-option>--</mat-option>
+              <mat-option class="multiline-mat-option" *ngFor="let rubro of rubros" [value]="rubro">
+                {{rubro.Codigo}} - {{rubro.Nombre}}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
         </div>
         <div class="label-inc">Incremento:
           <mat-form-field [floatLabel]="floatLabelValue">

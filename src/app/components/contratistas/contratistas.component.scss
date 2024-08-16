@@ -126,9 +126,11 @@ input {
   height: unset;
   padding: 1%;
   border-radius: 10px 10px 10px 10px;
-  width: auto;
+  width: fit-content;
   margin-bottom: 1%;
+  margin-top: 0%;
   width: 40%;
+  align-items: left;
 }
 
 .multiline-mat-option.mat-option {
@@ -137,4 +139,60 @@ input {
   height: unset;
   padding-top: 0.9em;
   padding-bottom: 0.9em;
+}
+
+.mat-form-field {
+  width: 100%;
+  /* Adjust width as needed */
+}
+
+.mat-form-field-appearance-outline .mat-form-field-outline {
+  border-color: #a94442;
+  /* Outline color */
+}
+
+.mat-form-field-appearance-outline .mat-form-field-outline-thick {
+  border-width: 1px;
+  /* Border thickness */
+}
+
+.mat-select-trigger {
+  font-size: 14px;
+  /* Adjust font size */
+}
+
+.mat-input-element {
+  padding: 0 10px;
+  /* Adjust padding */
+}
+
+.mat-label {
+  color: #a94442;
+  /* Label color */
+  font-weight: bold;
+}
+
+.input-search {
+  width: 99%;
+  height: 30px;
+  text-align: left;
+  border-radius: 5px;
+
+}
+
+.custom-select-panel .mat-select-panel {
+  margin-top: 0 !important;
+}
+
+.custom-select-panel .mat-select-panel {
+  margin-top: 0 !important;
+}
+
+.form-control {
+  width: 100%;
+}
+
+.multiline-mat-option {
+  white-space: normal !important;
+  word-wrap: break-word !important;
 }
