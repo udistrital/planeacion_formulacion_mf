@@ -109,6 +109,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
   codigo_abreviacion: any;
+  unidadValida!: boolean;
+  ultimaVinculacion: any = null;
 
   private codigosService = new CodigosService();
 
@@ -358,6 +360,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               .subscribe(async (vinculacion: DataRequest) => {
                 if (vinculacion.Data != null) {
                   const vinculaciones: TerceroFormulacion[] = vinculacion.Data;
+                  // Procesar la última vinculación
+                  let ultimaVinculacion = vinculaciones[vinculaciones.length - 1];
                   for (let aux = 0; aux < vinculaciones.length; aux++) {
                     const vinculacion = vinculaciones[aux];
                     await new Promise<Dependencia[]>((resolve, reject) => {
@@ -380,6 +384,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                             if (!this.unidades.find((u) => u.Id === unidad.Id)) {
                               this.unidades.push(unidad);
                               this.auxUnidades.push(unidad);
+                              this.ultimaVinculacion = ultimaVinculacion.DependenciaId;
                             }
                             this.moduloVisible = true;
                             resolve(this.unidades)
@@ -709,6 +714,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   async onChangeU(unidad: Dependencia) {
     if (unidad == undefined) {
       this.unidadSelected = false;
+      this.unidadValida = false;
     } else {
       this.unidadSelected = true;
       this.unidad = unidad;
@@ -719,8 +725,19 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.estadoPlan = '';
       this.iconEstado = '';
       this.versionPlan = '';
+      if ( this.rol === "PLANEACION"){
+        this.unidadValida = true;
+      }else{
+      if (this.unidad.Id === this.ultimaVinculacion ) {
+        this.unidadValida = true;
+      } else {
+        this.unidadValida = false;
+      }
+    }
       if (this.vigenciaSelected && this.planSelected) {
         await this.busquedaPlanes(this.planAux);
+      } else if (this.vigenciaSelected) {
+        await this.loadPlanes();
       }
     }
   }
@@ -930,9 +947,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/plan/versiones/${this.unidad.Id}/${this.vigencia.Id}/${auxNombre}`).subscribe(
       (respuesta: DataRequest) => {
         if (respuesta) {
-          let versiones = respuesta.Data as Plan[];
-          versiones.forEach((_, i) => {
-            versiones[i].numero = (i + 1).toString();
+          this.versiones = respuesta.Data as Plan[];
+          this.versiones.forEach((_, i) => {
+            this.versiones[i].numero = (i + 1).toString();
           });
           let indexToSelect: number;
           if (this.banderaRealizarAjustes) {
@@ -2031,30 +2048,50 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     });
   }
 
+  obtenerElemento(arreglo: any[], parametroFiltro:string, selectFormulario:string, valor: string|number): any{
+    let elementos = arreglo.filter((elemento) => elemento[parametroFiltro] == valor)
+    if(elementos.length > 0){
+      this.formSelect.get(selectFormulario)!.setValue(elementos[0]);
+      return elementos[0]
+    } else {
+      console.error(
+        'No se encontró un elemento con los valores dados, verifique que los datos esten bien'
+      );
+      return null;
+    }
+  }
+
   async cargarPlan(planACargar: ResumenPlan) {
     // Se obtiene la unidad especificada para cargarla en los desplegables
-    const unidad = this.auxUnidades.find(
-      (unidad) => unidad.Id == Number(planACargar.dependencia_id)
-    )!;
-    this.formSelect.get('selectUnidad')!.setValue(unidad);
-    await this.onChangeU(unidad);
-
+    await this.onChangeU(
+      this.obtenerElemento(
+        this.auxUnidades,
+        'Id',
+        'selectUnidad',
+        Number(planACargar.dependencia_id)
+      )
+    );
     // Se obtiene la vigencia especificada para cargarla en los desplegables
-    const vigencia = this.vigencias.find(
-      (vigencia) => vigencia.Id == Number(planACargar.vigencia_id)
-    )!;
-    this.formSelect.get('selectVigencia')!.setValue(vigencia);
-    await this.onChangeV(vigencia, false);
-
+    await this.onChangeV(
+      this.obtenerElemento(
+        this.vigencias,
+        'Id',
+        'selectVigencia',
+        planACargar.vigencia_id
+      ), false
+    );
     // En este punto se deben haber cargado los planes por la función 'onChangeV'
     if (this.planes != undefined) {
-      const plan = this.planes.find(
-        (plan) => plan.nombre == planACargar.nombre
-      )! as Plan;
-      this.formSelect.get('selectPlan')!.setValue(plan);
-      this.onChangeP(plan);
+      this.onChangeP(
+        this.obtenerElemento(
+          this.planes,
+          'nombre',
+          'selectPlan',
+          planACargar.nombre
+        )
+      );
       if (planACargar.version) {
-        this.versionDesdeTabla = planACargar.version!;
+        this.versionDesdeTabla = planACargar.version
       }
     } else {
       console.error('No se han cargado los planes');
