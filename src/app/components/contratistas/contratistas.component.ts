@@ -271,7 +271,7 @@ export class ContratistasComponent implements OnInit {
   }
 
   async loadPerfiles() {
-    this.request.get(environment.PARAMETROS_SERVICE, `parametro?query=TipoParametroId:${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP')}`).subscribe((data: DataRequest) => {
+    this.request.get(environment.PARAMETROS_SERVICE, `parametro?query=TipoParametroId:${await this.codigosService.getId("PARAMETROS_SERVICE", "tipo_parametro", "PC")}`).subscribe((data: DataRequest) => {
       if (data) {
         this.perfiles = data.Data
       }
