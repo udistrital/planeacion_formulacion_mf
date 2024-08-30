@@ -26,6 +26,7 @@ import { MatExpansionModule } from '@angular/material/expansion';
 import { MatDialogModule } from '@angular/material/dialog';
 import { MatPaginatorModule } from '@angular/material/paginator';
 import { MatSortModule } from '@angular/material/sort';
+import { MatMenuModule } from '@angular/material/menu';
 
 import { DocentesComponent } from './components/docentes/docentes.component';
 import { RecursosComponent } from './components/recursos/recursos.component';
@@ -66,7 +67,8 @@ import { BrowserAnimationsModule } from '@angular/platform-browser/animations';
     MatExpansionModule,
     MatDialogModule,
     MatSortModule,
-    MatCardModule
+    MatCardModule,
+    MatMenuModule
   ],
   providers: [],
   schemas: [CUSTOM_ELEMENTS_SCHEMA],
