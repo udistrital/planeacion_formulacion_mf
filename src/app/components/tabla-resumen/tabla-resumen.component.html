@@ -68,7 +68,7 @@
           </th>
           <td mat-cell *matCellDef="let plan">
             <button mat-icon-button (click)="consultar(plan)" [disabled]="plan.version === -1 || plan.vigencia === 0">
-              <mat-icon>search</mat-icon>
+              <mat-icon class="menu-button-icon">search</mat-icon>
             </button>
           </td>
         </ng-container>
