@@ -39,6 +39,7 @@ export class RecursosComponent implements OnInit {
 
   CODIGO_ESTADO_PRE_AVAL!: string;
   CODIGO_ESTADO_REVISADO!: string;
+  CODIGO_ESTADO_IR_SP!: string;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -60,6 +61,7 @@ export class RecursosComponent implements OnInit {
   async ngOnInit() {
     this.CODIGO_ESTADO_PRE_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'PA_SP')
     this.CODIGO_ESTADO_REVISADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'R_SP');
+    this.CODIGO_ESTADO_IR_SP = await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IR_SP');
     this.loadPlan();
     this.loadRubros();
     this.dataSource = new MatTableDataSource();
@@ -181,7 +183,7 @@ export class RecursosComponent implements OnInit {
 
   async loadTabla() {
     if (this.dataTabla) {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IR_SP')}`).subscribe((dataG: DataRequest) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.CODIGO_ESTADO_IR_SP}`).subscribe((dataG: DataRequest) => {
         if (dataG.Data != null) {
           this.dataSource.data = dataG.Data
         }
@@ -329,7 +331,7 @@ export class RecursosComponent implements OnInit {
         obj["index"] = num.toString();
       }
       let dataS = JSON.stringify(Object.assign({}, data))
-      this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IR_SP')}`).subscribe((data: DataRequest) => {
+      this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/${this.CODIGO_ESTADO_IR_SP}`).subscribe((data: DataRequest) => {
         if (data) {
           Swal.fire({
             title: 'Guardado exitoso',

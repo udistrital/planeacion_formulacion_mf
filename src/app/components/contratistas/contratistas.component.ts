@@ -55,6 +55,8 @@ export class ContratistasComponent implements OnInit {
 
   CODIGO_ESTADO_PRE_AVAL!: string;
   CODIGO_ESTADO_REVISADO!: string;
+  CODIGO_ESTADO_IC_SP!: string;
+  CODIGO_ESTADO_PC!: string;
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
@@ -75,6 +77,8 @@ export class ContratistasComponent implements OnInit {
   async ngOnInit() {
     this.CODIGO_ESTADO_PRE_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'PA_SP');
     this.CODIGO_ESTADO_REVISADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'R_SP');
+    this.CODIGO_ESTADO_IC_SP = await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP');
+    this.CODIGO_ESTADO_PC = await this.codigosService.getId("PARAMETROS_SERVICE", "tipo_parametro", "PC");
     this.loadPlan();
     this.dataSource = new MatTableDataSource<any>();
     this.loadPerfiles();
@@ -260,7 +264,7 @@ export class ContratistasComponent implements OnInit {
 
   async loadTabla() {
     if (this.dataTabla) {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP')}`).subscribe((dataG: DataRequest) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.CODIGO_ESTADO_IC_SP}`).subscribe((dataG: DataRequest) => {
         if (dataG.Data != null) {
           this.dataSource.data = dataG.Data;
           this.rubroSeleccionado = rubros_aux[rubros_aux.findIndex((r) => r.Codigo === this.dataSource.data[0].rubro)]
@@ -271,7 +275,7 @@ export class ContratistasComponent implements OnInit {
   }
 
   async loadPerfiles() {
-    this.request.get(environment.PARAMETROS_SERVICE, `parametro?query=TipoParametroId:${await this.codigosService.getId("PARAMETROS_SERVICE", "tipo_parametro", "PC")}`).subscribe((data: DataRequest) => {
+    this.request.get(environment.PARAMETROS_SERVICE, `parametro?query=TipoParametroId:${this.CODIGO_ESTADO_PC}`).subscribe((data: DataRequest) => {
       if (data) {
         this.perfiles = data.Data
       }
@@ -535,7 +539,7 @@ export class ContratistasComponent implements OnInit {
           obj["index"] = num.toString();
         }
         let dataS = JSON.stringify(Object.assign({}, data))
-        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP')}`).subscribe((data: DataRequest) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, dataS, `${this.plan}/${this.CODIGO_ESTADO_IC_SP}`).subscribe((data: DataRequest) => {
           if (data) {
             Swal.fire({
               title: 'Guardado exitoso',
