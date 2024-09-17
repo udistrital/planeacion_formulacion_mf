@@ -183,6 +183,39 @@ a {
   }
 }
 
+.menu-button-icon {
+  color: var(--others-accent) !important;
+}
+
+.search-icon {
+  color: var(--success-base) !important;
+}
+
+.edit-icon {
+  color: var(--others-main) !important;
+}
+
+.delete-icon {
+  color: var(--primary) !important;
+}
+
+/* Estilos para el indicador de estado */
+.status-indicator {
+  margin-top: 0.3em;
+  font-weight: bold;
+  padding: 0.5rem;
+  border-radius: 0.25rem;
+  margin-bottom: 0.3rem;
+}
+.status-indicator.active {
+  color: white;
+  background-color: #91b766;
+}
+.status-indicator.inactive {
+  color: white;
+  background-color: var(--danger-main);
+}
+
 .mat-mdc-row:nth-child(even) .mat-mdc-cell {
   background-color: #E7D6D6;
 }
