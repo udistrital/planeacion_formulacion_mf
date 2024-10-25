@@ -5,7 +5,7 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Actividad } from 'src/app/@core/models/actividad';
-import { DataRequest } from 'src/app/@core/models/dataRequest';
+import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
 import { Dependencia, DependenciaTipoDependencia, TipoDependencia } from 'src/app/@core/models/dependencia';
 import { EstadoPlan } from 'src/app/@core/models/estadoPlan';
 import { Paso } from 'src/app/@core/models/formato';
@@ -1993,9 +1993,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                 {}
               )
               .subscribe(
-                (data: DataRequest) => {
+                (data: DataRequestMID) => {
                   Swal.close();
-                  if (data.Success == true) {
+                  if (data.success == true) {
                     this.codigoNotificacion = "FPA2"; // NOTIFICACION(FPA2)
                     Swal.fire({
                       title: "Plan Avalado",
