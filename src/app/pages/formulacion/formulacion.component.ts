@@ -5,7 +5,7 @@ import { MatSort } from '@angular/material/sort';
 import { MatTableDataSource } from '@angular/material/table';
 import { ActivatedRoute, Router } from '@angular/router';
 import { Actividad } from 'src/app/@core/models/actividad';
-import { DataRequest } from 'src/app/@core/models/dataRequest';
+import { DataRequest, DataRequestMID } from 'src/app/@core/models/dataRequest';
 import { Dependencia, DependenciaTipoDependencia, TipoDependencia } from 'src/app/@core/models/dependencia';
 import { EstadoPlan } from 'src/app/@core/models/estadoPlan';
 import { Paso } from 'src/app/@core/models/formato';
@@ -962,8 +962,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       (respuesta: DataRequest) => {
         if (respuesta) {
           this.versiones = respuesta.Data as Plan[];
+          let auxReformulacion = false;
           this.versiones.forEach((_, i) => {
             this.versiones[i].numero = (i + 1).toString();
+            if(this.versiones[i].reformulacion == true){
+              auxReformulacion = true
+            }
+            this.versiones[i].reformulacion = auxReformulacion
           });
           let indexToSelect: number;
           if (this.banderaRealizarAjustes) {
@@ -1988,9 +1993,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                 {}
               )
               .subscribe(
-                (data: DataRequest) => {
+                (data: DataRequestMID) => {
                   Swal.close();
-                  if (data.Success == true) {
+                  if (data.success == true) {
                     this.codigoNotificacion = "FPA2"; // NOTIFICACION(FPA2)
                     Swal.fire({
                       title: "Plan Avalado",

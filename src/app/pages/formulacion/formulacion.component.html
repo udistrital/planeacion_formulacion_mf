@@ -92,7 +92,7 @@
               <mat-label id="tipo-input-label">Versiones</mat-label>
               <mat-select (selectionChange)="onChangeVersion($event.value)" [formControl]="controlVersion" hideSingleSelectionIndicator=true>
                 <mat-option *ngFor="let version of versiones" [value]="version">
-                  Versión {{version.numero}}
+                  Versión {{version.numero}} {{ version.reformulacion ? " - Reformulación": ""}}
                 </mat-option>
               </mat-select>
             </mat-form-field>
