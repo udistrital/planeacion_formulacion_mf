@@ -80,15 +80,30 @@
                 <th mat-header-cell *matHeaderCellDef >
                   <span [style.paddingLeft.px]="5"> Estado </span>
                 </th>
-              <td mat-cell *matCellDef="let data" class="mat-column-activo"> {{data.activo}} </td>
+              <td mat-cell *matCellDef="let data" class="mat-column-activo">
+                <div class="status-indicator" [ngClass]="{active: data.activo === 'activo',inactive: data.activo === 'inactivo'}">
+                  {{data.activo}}
+                </div>
+              </td>
             </ng-container>
             <ng-container matColumnDef="actions">
                 <th mat-header-cell *matHeaderCellDef >
                     <span class="header-align-right"> Acciones </span>
                 </th>
                 <td mat-cell *matCellDef="let row" class="mat-column-actions">
-                     <button mat-icon-button (click)="editar(row, 'editar')"><mat-icon>edit</mat-icon></button>
-                     <button mat-icon-button (click)="agregar(row, 'agregar')"><mat-icon>add_circle_outline</mat-icon></button>
+                    <button mat-icon-button class="menu-button-icon" [matMenuTriggerFor]="menu" aria-label="Example icon-button with a menu">
+                      <mat-icon>more_vert</mat-icon>
+                    </button>
+                    <mat-menu #menu="matMenu">
+                      <button mat-menu-item (click)="editar(row, 'editar')">
+                        <mat-icon class="edit-icon">edit</mat-icon>
+                        <span>Editar</span>
+                      </button>
+                      <button mat-menu-item (click)="agregar(row, 'agregar')">
+                        <mat-icon class="search-icon">add_circle_outline</mat-icon>
+                        <span>Crear nivel</span>
+                      </button>
+                    </mat-menu>
                 </td>
             </ng-container>
             <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
@@ -139,7 +154,11 @@
             <th mat-header-cell *matHeaderCellDef >
               <span class="header-align-right"> Estado </span>
             </th>
-          <td mat-cell *matCellDef="let data" class="td-align-right"> {{data.activo}} </td>
+            <td mat-cell *matCellDef="let data" class="td-align-right">
+              <div class="status-indicator" [ngClass]="{active: data.activo === 'activo',inactive: data.activo === 'inactivo'}">
+                {{data.activo}}
+              </div>
+            </td>
         </ng-container>
         <tr mat-header-row *matHeaderRowDef="displayedColumnsView"></tr>
         <tr mat-row matRipple *matRowDef="let row; columns: displayedColumnsView;"></tr>
@@ -190,7 +209,11 @@
             <th mat-header-cell *matHeaderCellDef >
               <span [style.paddingLeft.px]="5"> Estado </span>
             </th>
-          <td mat-cell *matCellDef="let data" class="mat-column-activo"> {{data.activo}} </td>
+            <td mat-cell *matCellDef="let data" class="mat-column-activo">
+              <div class="status-indicator" [ngClass]="{active: data.activo === 'activo',inactive: data.activo === 'inactivo'}">
+                {{data.activo}}
+              </div>
+            </td>
         </ng-container>
         <ng-container matColumnDef="actions">
             <th mat-header-cell *matHeaderCellDef >

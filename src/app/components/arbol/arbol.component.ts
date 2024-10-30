@@ -116,7 +116,7 @@ export class ArbolComponent implements OnInit {
   }
 
   async ngOnChanges(changes: any) {
-    if (this.tipoPlanId !== await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PR_SP')) {
+    if (this.tipoPlanId !== this.ID_TIPO_PROYECTO) {
       if (this.idPlan !== this.planActual) {
         this.loadArbolMid();
         this.planActual = this.idPlan;
@@ -135,6 +135,7 @@ export class ArbolComponent implements OnInit {
       title: 'Cargando información',
       timerProgressBar: true,
       showConfirmButton: false,
+      allowOutsideClick: false,
       willOpen: () => {
         Swal.showLoading();
       },

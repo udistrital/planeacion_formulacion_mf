@@ -31,10 +31,17 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   ID_ESTADO_FORMULADO!: string;
   ID_ESTADO_EN_REVISION!: string;
   ID_ESTADO_REVISADO!: string;
-  ID_ESTADO_PRE_AVAL!:string;
-  ID_ESTADO_AVAL!:string;
-  ID_ESTADO_AJUSTE_PRESUPUESTAL!:string;
-  ID_ESTADO_REVISION_VERIFICADA!:string;
+  ID_ESTADO_PRE_AVAL!: string;
+  ID_ESTADO_AVAL!: string;
+  ID_ESTADO_AJUSTE_PRESUPUESTAL!: string;
+  ID_ESTADO_REVISION_VERIFICADA!: string;
+  CODIGO_ESTADO_F_SP!: string;
+  CODIGO_ESTADO_PR_SP!: string;
+  CODIGO_ESTADO_IC_SP!: string;
+  CODIGO_ESTADO_IR_SP!: string;
+  CODIGO_ESTADO_ID_SP!: string;
+  CODIGO_ESTADO_PD_SP!: string;
+  CODIGO_ESTADO_PLI_SP!: string;
 
   activedStep = 0;
   form!: FormGroup;
@@ -53,7 +60,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   planAux!: Plan;
   unidad!: Dependencia;
   vigencia!: Vigencia;
-  versionDesdeTabla!: number;
+  versionDesdeTabla!: number | undefined;
   steps!: Paso[];
   json: any;
   estado!: string;
@@ -67,10 +74,11 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   banderaIdentDocentes!: boolean;
   banderaUltimaVersion!: boolean;
   banderaEstadoDatos!: boolean;
-  tipoPlanId!: string;
-  idPadre!: string;
-  tipoPlanIndicativo!: string;
-  idPlanIndicativo!: string;
+  banderaRealizarAjustes!: boolean;
+  tipoPlanId!: any;
+  idPadre!: any;
+  tipoPlanIndicativo!: any;
+  idPlanIndicativo!: any;
   planesDesarrollo!: Plan[];
   planesIndicativos!: Plan[];
   planDSelected!: boolean;
@@ -107,6 +115,9 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   @ViewChild(MatPaginator) paginator!: MatPaginator;
   @ViewChild(MatSort) sort!: MatSort;
+  codigo_abreviacion: any;
+  unidadValida!: boolean;
+  ultimaVinculacion: any = null;
 
   private codigosService = new CodigosService();
 
@@ -148,13 +159,13 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     } else if (roles.__zone_symbol__value.find((x: any) => x == 'ASISTENTE_PLANEACION')) {
       this.rol = 'ASISTENTE_PLANEACION';
     } else if (
-      roles.__zone_symbol__value.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')){
+      roles.__zone_symbol__value.find((x: any) => x == 'JEFE_DEPENDENCIA' || x == 'ASISTENTE_DEPENDENCIA')) {
       this.rol = 'JEFE_DEPENDENCIA';
     }
 
-    if(this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
+    if (this.rol == 'PLANEACION' || this.rol == 'ASISTENTE_PLANEACION') {
       this.loadUnidades();
-    }else if (this.rol == 'JEFE_DEPENDENCIA') {
+    } else if (this.rol == 'JEFE_DEPENDENCIA') {
       this.validarUnidad();
     }
   }
@@ -172,6 +183,14 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     this.ID_ESTADO_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'A_SP');
     this.ID_ESTADO_AJUSTE_PRESUPUESTAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'AP_SP');
     this.ID_ESTADO_REVISION_VERIFICADA = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'RV_SP');
+    this.CODIGO_ESTADO_F_SP = await this.codigosService.getId("PLANES_CRUD", "tipo-seguimiento", "F_SP");
+    this.CODIGO_ESTADO_PR_SP = await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PR_SP');
+    this.CODIGO_ESTADO_IC_SP = await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP');
+    this.CODIGO_ESTADO_IR_SP = await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IR_SP');
+    this.CODIGO_ESTADO_ID_SP = await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP');
+    this.CODIGO_ESTADO_PD_SP = await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PD_SP');
+    this.CODIGO_ESTADO_PLI_SP = await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PLI_SP');
+    this.banderaRealizarAjustes = false;
 
     const unidadCookie = this.serviceCookies.getCookie("unidad");
     const vigenciaCookie = this.serviceCookies.getCookie("vigencia");
@@ -285,7 +304,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         unidades_interes: JSON.stringify([unidad_interes]),
         planes_interes: JSON.stringify([plan_interes]),
         periodo_id: this.vigencia.Id.toString(),
-        tipo_seguimiento_id: await this.codigosService.getId("PLANES_CRUD", "tipo-seguimiento", "F_SP")
+        tipo_seguimiento_id: this.CODIGO_ESTADO_F_SP
       }
       await new Promise((resolve, reject) => {
         this.request
@@ -355,6 +374,8 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               .subscribe(async (vinculacion: DataRequest) => {
                 if (vinculacion.Data != null) {
                   const vinculaciones: TerceroFormulacion[] = vinculacion.Data;
+                  // Procesar la última vinculación
+                  let ultimaVinculacion = vinculaciones[vinculaciones.length - 1];
                   for (let aux = 0; aux < vinculaciones.length; aux++) {
                     const vinculacion = vinculaciones[aux];
                     await new Promise<Dependencia[]>((resolve, reject) => {
@@ -377,6 +398,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
                             if (!this.unidades.find((u) => u.Id === unidad.Id)) {
                               this.unidades.push(unidad);
                               this.auxUnidades.push(unidad);
+                              this.ultimaVinculacion = ultimaVinculacion.DependenciaId;
                             }
                             this.moduloVisible = true;
                             resolve(this.unidades)
@@ -463,7 +485,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         if (data) {
           // No se puede traer filtrado desde PLANES_CRUD, al parecer excede la cantidad de parametros
           let planes = (data.Data as Plan[]).filter(
-            async (p) => p.tipo_plan_id != await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PR_SP')
+            async (p) => p.tipo_plan_id != this.CODIGO_ESTADO_PR_SP
           );
           this.planes = []
           planes.forEach(plan => {
@@ -500,7 +522,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     const periodo_seguimiento = {
       unidades_interes: JSON.stringify([unidad_interes]),
       periodo_id: this.vigencia.Id.toString(),
-      tipo_seguimiento_id: await this.codigosService.getId("PLANES_CRUD", "tipo-seguimiento", "F_SP")
+      tipo_seguimiento_id: this.CODIGO_ESTADO_F_SP
     }
     return await new Promise<(Plan | PlanInteres)[]>((resolve, reject) => {
       this.request
@@ -587,7 +609,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   submit() {
-    this.SwalCargando();
+    this.mostrarMensajeCarga();
     if (!this.banderaEdit) { // ADD NUEVA ACTIVIDAD
       if (this.dataArmonizacionPED.length != 0 && this.dataArmonizacionPI.length != 0) {
 
@@ -706,6 +728,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   async onChangeU(unidad: Dependencia) {
     if (unidad == undefined) {
       this.unidadSelected = false;
+      this.unidadValida = false;
     } else {
       this.unidadSelected = true;
       this.unidad = unidad;
@@ -716,8 +739,19 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.estadoPlan = '';
       this.iconEstado = '';
       this.versionPlan = '';
+      if ( this.rol === "PLANEACION"){
+        this.unidadValida = true;
+      }else{
+      if (this.unidad.Id === this.ultimaVinculacion ) {
+        this.unidadValida = true;
+      } else {
+        this.unidadValida = false;
+      }
+    }
       if (this.vigenciaSelected && this.planSelected) {
         await this.busquedaPlanes(this.planAux);
+      } else if (this.vigenciaSelected) {
+        await this.loadPlanes();
       }
     }
   }
@@ -764,6 +798,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       this.estadoPlan = "";
       this.iconEstado = "";
       this.versionPlan = "";
+      this.versionDesdeTabla = undefined;
       this.banderaEstadoDatos = false;
       this.plan = plan;
       this.planAsignado = false;
@@ -872,7 +907,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
       // Cuando el plan pasa de formulación a seguimiento
       if (this.codigoNotificacion == "FPA2") {
-        this.codigoNotificacion = "S"; // NOTIFICACION(S)
+        this.codigoNotificacion = "FS"; // NOTIFICACION(FS)
         this.enviarNotificacion();
       }
       this.codigoNotificacion = "";
@@ -884,6 +919,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       (data: DataRequest) => {
         if (data) {
           this.estadoPlan = (data.Data as EstadoPlan).nombre;
+          this.codigo_abreviacion = data.Data.codigo_abreviacion;
           this.getIconEstado();
           this.visualizeObs();
           this.enviarNotificacion();
@@ -927,28 +963,36 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         if (respuesta) {
           let versiones = respuesta.Data as Plan[];
           let auxReformulacion = false;
-          for (let i = 0; i < versiones.length; i++) {
-            versiones[i].numero = (i + 1).toString();
-            if(versiones[i].reformulacion == true){
+          this.versiones = versiones;
+          this.versiones = respuesta.Data as Plan[];
+          this.versiones.forEach((_, i) => {
+            this.versiones[i].numero = (i + 1).toString();
+            if(this.versiones[i].reformulacion == true){
               auxReformulacion = true
             }
             versiones[i].reformulacion = auxReformulacion
-            
-          }
-          this.versiones = versiones;
-          this.plan =
-            this.versiones[
-            this.versionDesdeTabla == undefined || this.versionDesdeTabla > this.versiones.length
+          });
+          let indexToSelect: number;
+          if (this.banderaRealizarAjustes) {
+            indexToSelect = this.versiones.length - 1;
+            this.banderaRealizarAjustes = false;
+          } else {
+            indexToSelect = (this.versionDesdeTabla == undefined || this.versionDesdeTabla > this.versiones.length)
               ? this.versiones.length - 1
-              : this.versionDesdeTabla - 1
-            ];
+              : this.versionDesdeTabla - 1;
+          }
+          this.plan = this.versiones[indexToSelect];
           this.planAsignado = true;
           this.clonar = false;
-          this.banderaUltimaVersion = true;
           this.loadData(planRecienCreado);
           this.controlVersion = new FormControl(this.plan);
           this.versionPlan = this.plan.numero!;
           this.getEstado();
+          if (indexToSelect + 1 == this.versiones.length) {
+            this.banderaUltimaVersion = true;
+          } else {
+            this.banderaUltimaVersion = false;
+          }
         }
       }, (error) => {
         Swal.fire({
@@ -1037,6 +1081,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       };
       if (data_source != null) {
         this.dataSource = new MatTableDataSource(data_source);
+        this.pintarActividades(this.plan._id, data.Data.data_source, data.Data.data_source.length);
         this.displayedColumns = displayed_columns as string[];
         this.columnsToDisplay = this.displayedColumns.slice();
         this.dataSource.paginator = this.paginator;
@@ -1147,6 +1192,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         title: 'Cargando información',
         timerProgressBar: true,
         showConfirmButton: false,
+        allowOutsideClick: false,
         willOpen: () => {
           Swal.showLoading();
         },
@@ -1175,6 +1221,10 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         })
       })
     }
+    this.idPadre = undefined;
+    this.tipoPlanId = undefined;
+    this.idPlanIndicativo = undefined;
+    this.tipoPlanIndicativo = undefined;
   }
 
   cleanBeforeLoad(): Promise<void> {
@@ -1209,6 +1259,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true,
       confirmButtonText: `Si`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
     }).then((result) => {
       if (result.isConfirmed) {
         this.request
@@ -1268,7 +1319,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   async identificarContratistas() {
-    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP')}`).subscribe(async (data: DataRequest) => {
+    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${this.CODIGO_ESTADO_IC_SP}`).subscribe(async (data: DataRequest) => {
       if ((data.Data as any[]).length == 0) {
         var str1 = 'Identificación de Contratistas ' + this.plan.nombre
         var str2 = 'Identificación de Contratistas ' + this.plan.nombre + ' ' + this.unidad.Nombre
@@ -1277,7 +1328,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           "descripcion": str2,
           "plan_id": this.plan._id,
           "dato": "{}",
-          "tipo_identificacion_id": await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IC_SP'),
+          "tipo_identificacion_id": this.CODIGO_ESTADO_IC_SP,
           "activo": true
         }
         this.request.post(environment.PLANES_CRUD, `identificacion`, datoIdenti).subscribe((dataP: DataRequest) => {
@@ -1299,7 +1350,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   async identificarRecursos() {
-    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IR_SP')}`).subscribe(async (data: DataRequest) => {
+    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${this.CODIGO_ESTADO_IR_SP}`).subscribe(async (data: DataRequest) => {
       if ((data.Data as any[]).length == 0) {
         var str1 = 'Identificación de Recursos ' + this.plan.nombre
         var str2 = 'Identificación de Recursos ' + this.plan.nombre + ' ' + this.unidad.Nombre
@@ -1308,7 +1359,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           "descripcion": String(str2),
           "plan_id": String(this.plan._id),
           "dato": "{}",
-          "tipo_identificacion_id": await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'IR_SP'),
+          "tipo_identificacion_id": this.CODIGO_ESTADO_IR_SP,
           "activo": true
         }
         this.request.post(environment.PLANES_CRUD, `identificacion`, datoIdenti).subscribe((dataP: DataRequest) => {
@@ -1331,14 +1382,14 @@ export class FormulacionComponent implements OnInit, OnDestroy {
 
   async identificarDocentes() {
 
-    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP')}`).subscribe(async (data: DataRequest) => {
+    this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:${this.plan._id},tipo_identificacion_id:${this.CODIGO_ESTADO_ID_SP}`).subscribe(async (data: DataRequest) => {
       if ((data.Data as any[]).length == 0) {
         let datoIdenti = {
           "nombre": `Identificación de Docentes ${this.plan.nombre}`,
           "descripcion": `Identificación de Docentes ${this.plan.nombre} ${this.unidad.Nombre}`,
           "plan_id": this.plan._id,
           "dato": "{}",
-          "tipo_identificacion_id": await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP'),
+          "tipo_identificacion_id": this.CODIGO_ESTADO_ID_SP,
           "activo": false
         }
         this.request.post(environment.PLANES_CRUD, `identificacion`, datoIdenti).subscribe((dataP: DataRequest) => {
@@ -1360,10 +1411,25 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   cargarPlanesDesarrollo() {
-    return new Promise(async(resolve) =>{
-      this.request.get(environment.PLANES_CRUD, `plan?query=activo:true,tipo_plan_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PD_SP')}`).subscribe((data: DataRequest) => {
+    let vigencia = {
+      Id: this.vigencia.Id,
+      Nombre: this.vigencia.Nombre
+    }
+    return new Promise(async (resolve) => {
+      this.request.get(environment.PLANES_CRUD, `plan?query=activo:true,tipo_plan_id:${this.CODIGO_ESTADO_PD_SP}`).subscribe((data: DataRequest) => {
         if (data) {
-          this.planesDesarrollo = data.Data;
+          let planesDesarrolloSinFiltro = data.Data;
+          let planesDesarrolloFiltrados: any[] = [];
+          planesDesarrolloSinFiltro.filter((plan: any) => {
+            if (plan.vigencia_aplica) {
+              let vigencia_aplica = JSON.parse(plan.vigencia_aplica);
+              const existe = vigencia_aplica.some((item: any) => item.Id === vigencia.Id && item.Nombre === vigencia.Nombre);
+              if (existe) {
+                planesDesarrolloFiltrados.push(plan);
+              };
+            };
+          });
+          this.planesDesarrollo = planesDesarrolloFiltrados;
           this.formArmonizacion.get('selectPED')!.setValue(this.planesDesarrollo[0])
           this.onChangePD(this.planesDesarrollo[0]);
           resolve(this.planesDesarrollo);
@@ -1373,10 +1439,25 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   cargarPlanesIndicativos() {
-    return new Promise(async(resolve)=>{
-      this.request.get(environment.PLANES_CRUD, `plan?query=tipo_plan_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-plan', 'PLI_SP')}`).subscribe((data: DataRequest) => {
+    let vigencia = {
+      Id: this.vigencia.Id,
+      Nombre: this.vigencia.Nombre
+    }
+    return new Promise(async (resolve) => {
+      this.request.get(environment.PLANES_CRUD, `plan?query=tipo_plan_id:${this.CODIGO_ESTADO_PLI_SP}`).subscribe((data: DataRequest) => {
         if (data) {
-          this.planesIndicativos = data.Data;
+          let planesIndicativosSinFiltro = data.Data;
+          let planesIndicativosFiltrados: any[] = [];
+          planesIndicativosSinFiltro.filter((plan: any) => {
+            if (plan.vigencia_aplica) {
+              let vigencia_aplica = JSON.parse(plan.vigencia_aplica);
+              const existe = vigencia_aplica.some((item: any) => item.Id === vigencia.Id && item.Nombre === vigencia.Nombre);
+              if (existe) {
+                planesIndicativosFiltrados.push(plan);
+              };
+            };
+          });
+          this.planesIndicativos = planesIndicativosFiltrados;
           this.formArmonizacion.get('selectPI')!.setValue(this.planesIndicativos[0])
           this.onChangePI(this.planesIndicativos[0]);
           resolve(this.planesIndicativos);
@@ -1442,6 +1523,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       showCancelButton: true,
       confirmButtonText: `Si`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
     }).then((result) => {
       if (result.isConfirmed) {
         this.addActividad = false;
@@ -1475,6 +1557,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         showCancelButton: true,
         confirmButtonText: `Si`,
         cancelButtonText: `No`,
+        allowOutsideClick: false,
       }).then(
         (result) => {
           if (result.isConfirmed) {
@@ -1533,6 +1616,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               icon: 'warning',
               confirmButtonText: `Si`,
               cancelButtonText: `No`,
+              allowOutsideClick: false,
               showCancelButton: true
             }).then((result) => {
               if (result.isConfirmed) {
@@ -1589,7 +1673,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     return new Promise<string>((resolve) => {
       this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/actividad/ponderacion/${this.plan._id}`).subscribe((data: DataRequest) => {
         let message: string = "";
-        if (data) {
+        if (data && data.Success) {
           type Data = { [key: string]: any };
           let aux: Data = data.Data;
           let keys: string[];
@@ -1607,19 +1691,20 @@ export class FormulacionComponent implements OnInit, OnDestroy {
           resolve(message);
         } else {
           Swal.fire({
-            title:
-              "Error en solicitud de cálculo de ponderación, por favor contactarse con el administrador del sistema.",
-            icon: "error",
+            title: 'Error en solicitud de cálculo de ponderación, por favor contactarse con el administrador del sistema.',
+            icon: 'error',
+            text: 'El formato del plan construido, presenta fallas.',
             showConfirmButton: false,
-            timer: 2500,
-          });
+            timer: 3500
+          })
         }
       }, (error) => {
         Swal.fire({
           title: 'Error en solicitud de cálculo de ponderación, por favor contactarse con el administrador del sistema.',
           icon: 'error',
+          text: 'El formato del plan construido, presenta fallas.',
           showConfirmButton: false,
-          timer: 2500
+          timer: 3500
         })
       })
     });
@@ -1632,6 +1717,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Continuar`,
       cancelButtonText: `Cancelar`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1650,12 +1736,6 @@ export class FormulacionComponent implements OnInit, OnDestroy {
               }
             })
           }
-        })
-        Swal.fire({
-          title: 'Estado actualizado (SIN CAMBIOS)',
-          icon: 'success',
-          showConfirmButton: false,
-          timer: 2500
         })
       } else if (result.dismiss === Swal.DismissReason.cancel) {
         Swal.fire({
@@ -1683,6 +1763,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1728,6 +1809,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: "warning",
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true,
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1787,12 +1869,14 @@ export class FormulacionComponent implements OnInit, OnDestroy {
   }
 
   realizarAjustes() {
+    this.banderaRealizarAjustes = true;
     Swal.fire({
       title: 'Realizar Ajustes',
       text: `¿Desea realizar ajustes al plan?`,
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1849,6 +1933,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: 'warning',
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true
     }).then((result) => {
       if (result.isConfirmed) {
@@ -1895,6 +1980,7 @@ export class FormulacionComponent implements OnInit, OnDestroy {
       icon: "warning",
       confirmButtonText: `Sí`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
       showCancelButton: true,
     }).then(
       // @ts-ignore
@@ -1983,30 +2069,50 @@ export class FormulacionComponent implements OnInit, OnDestroy {
     });
   }
 
+  obtenerElemento(arreglo: any[], parametroFiltro:string, selectFormulario:string, valor: string|number): any{
+    let elementos = arreglo.filter((elemento) => elemento[parametroFiltro] == valor)
+    if(elementos.length > 0){
+      this.formSelect.get(selectFormulario)!.setValue(elementos[0]);
+      return elementos[0]
+    } else {
+      console.error(
+        'No se encontró un elemento con los valores dados, verifique que los datos esten bien'
+      );
+      return null;
+    }
+  }
+
   async cargarPlan(planACargar: ResumenPlan) {
     // Se obtiene la unidad especificada para cargarla en los desplegables
-    const unidad = this.auxUnidades.find(
-      (unidad) => unidad.Id == Number(planACargar.dependencia_id)
-    )!;
-    this.formSelect.get('selectUnidad')!.setValue(unidad);
-    await this.onChangeU(unidad);
-
+    await this.onChangeU(
+      this.obtenerElemento(
+        this.auxUnidades,
+        'Id',
+        'selectUnidad',
+        Number(planACargar.dependencia_id)
+      )
+    );
     // Se obtiene la vigencia especificada para cargarla en los desplegables
-    const vigencia = this.vigencias.find(
-      (vigencia) => vigencia.Id == Number(planACargar.vigencia_id)
-    )!;
-    this.formSelect.get('selectVigencia')!.setValue(vigencia);
-    await this.onChangeV(vigencia, false);
-
+    await this.onChangeV(
+      this.obtenerElemento(
+        this.vigencias,
+        'Id',
+        'selectVigencia',
+        planACargar.vigencia_id
+      ), false
+    );
     // En este punto se deben haber cargado los planes por la función 'onChangeV'
     if (this.planes != undefined) {
-      const plan = this.planes.find(
-        (plan) => plan.nombre == planACargar.nombre
-      )! as Plan;
-      this.formSelect.get('selectPlan')!.setValue(plan);
-      this.onChangeP(plan);
+      this.onChangeP(
+        this.obtenerElemento(
+          this.planes,
+          'nombre',
+          'selectPlan',
+          planACargar.nombre
+        )
+      );
       if (planACargar.version) {
-        this.versionDesdeTabla = planACargar.version!;
+        this.versionDesdeTabla = planACargar.version
       }
     } else {
       console.error('No se han cargado los planes');
@@ -2025,5 +2131,68 @@ export class FormulacionComponent implements OnInit, OnDestroy {
         Swal.showLoading();
       },
     });
+  }
+
+  pintarActividades(plan_id: string, actividades: any, numero_actividades: any): any {
+    let promesas = [];
+
+    Swal.fire({
+      title: 'Cargando...',
+      timerProgressBar: true,
+      showConfirmButton: false,
+      allowEscapeKey: false,
+      allowOutsideClick: false,
+      willOpen: () => {
+        Swal.showLoading();
+      },
+    })
+
+    for (var i = 0; i < numero_actividades; i++) {
+      promesas.push(new Promise((PromesaResolve, PromesaReject) => {
+        this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/plan/` + plan_id + `/` + (i + 1)).subscribe((data: any) => {
+          if (data.Success && data.Data != null && data != null) {
+            PromesaResolve(data.Data[1][0]);
+          } else {
+            Swal.fire({
+              title: 'Atención en la operación',
+              text: `No se pudo consultar el contenido de las actividades`,
+              icon: 'warning',
+              showConfirmButton: false,
+              timer: 3500
+            })
+            PromesaReject();
+          }
+        }, (error) => {
+          Swal.fire({
+            title: 'Atención en la operación',
+            text: `No se pudo consultar el contenido de las actividades`,
+            icon: 'warning',
+            showConfirmButton: false,
+            timer: 3500
+          })
+          PromesaReject();
+        })
+      }));
+    }
+    Promise.all(promesas).then((contenido_actividades: any) => {
+      let observaciones = false;
+
+      for (var i = 0; i < contenido_actividades.length; i++) {
+        for (let key in contenido_actividades[i]) {
+          if (key.slice(-2) == "_o" && (contenido_actividades[i][key] != "" && contenido_actividades[i][key] != "Sin observación")) {
+            observaciones = true;
+          }
+        }
+
+        if (observaciones) {
+          actividades[i].color = "ConObservaciones"
+        } else {
+          actividades[i].color = "SinObservaciones"
+        }
+        observaciones = false;
+      }
+      this.dataSource = new MatTableDataSource(actividades);
+      Swal.close();
+    })
   }
 }

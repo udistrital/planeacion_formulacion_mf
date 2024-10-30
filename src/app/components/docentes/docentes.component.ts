@@ -53,6 +53,7 @@ export class DocentesComponent implements OnInit {
 
   CODIGO_ESTADO_PRE_AVAL!: string;
   CODIGO_ESTADO_REVISADO!: string;
+  CODIGO_ESTADO_ID_SP!: string;
 
   @ViewChild(MatPaginator) paginatorRHF!: MatPaginator;
   @ViewChild(MatPaginator) paginatorRHVPRE!: MatPaginator;
@@ -76,6 +77,7 @@ export class DocentesComponent implements OnInit {
   async ngOnInit() {
     this.CODIGO_ESTADO_PRE_AVAL = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'PA_SP')
     this.CODIGO_ESTADO_REVISADO = await this.codigosService.getId('PLANES_CRUD', 'estado-plan', 'R_SP')
+    this.CODIGO_ESTADO_ID_SP = await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP');
 
     this.dataSourceRHF = new MatTableDataSource<any>();
     this.dataSourceRHVPRE = new MatTableDataSource<any>();
@@ -235,7 +237,7 @@ export class DocentesComponent implements OnInit {
           "rubro": "",
           "codigo": ""
         }];
-      this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:` + this.plan + `,tipo_identificacion_id:${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP')}`).subscribe((data: DataRequest) => {
+      this.request.get(environment.PLANES_CRUD, `identificacion?query=plan_id:` + this.plan + `,tipo_identificacion_id:${this.CODIGO_ESTADO_ID_SP}`).subscribe((data: DataRequest) => {
         if (data) {
           let identificacion = data.Data[0];
           if (identificacion.activo === false) {
@@ -490,7 +492,7 @@ export class DocentesComponent implements OnInit {
 
   getData() {
     return new Promise(async (resolve) => {
-      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP')}`).subscribe((data: DataRequest) => {
+      this.request.get(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion/${this.plan}/${this.CODIGO_ESTADO_ID_SP}`).subscribe((data: DataRequest) => {
         if (data) {
           this.data = data.Data;
           resolve(this.data)
@@ -814,6 +816,7 @@ export class DocentesComponent implements OnInit {
       showCancelButton: true,
       confirmButtonText: `Si`,
       cancelButtonText: `No`,
+      allowOutsideClick: false,
     }).then((result) => {
       if (result.isConfirmed) {
         this._deleteElemento(index, tipo);
@@ -1086,7 +1089,8 @@ export class DocentesComponent implements OnInit {
       Swal.fire({
         icon: 'warning',
         text: 'El porcentaje de incremento asociado a la vigencia en cuestión aún no ha sido aplicado, por favor presione el botón "Aplicar Incremento" para actualizar los valores.',
-        showConfirmButton: true
+        showConfirmButton: true,
+        allowOutsideClick: false,
       })
     } else {
       if (this.verificarTablas()) {
@@ -1148,7 +1152,7 @@ export class DocentesComponent implements OnInit {
           "rubros_pos": dataRubrosPos
         }
         let aux = JSON.stringify(Object.assign({}, identificaciones));
-        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, aux, `${this.plan}/${await this.codigosService.getId('PLANES_CRUD', 'tipo-identificacion', 'ID_SP')}`).subscribe((data: DataRequest) => {
+        this.request.put(environment.PLANEACION_FORMULACION_MID, `formulacion/identificacion`, aux, `${this.plan}/${this.CODIGO_ESTADO_ID_SP}`).subscribe((data: DataRequest) => {
           if (data) {
             Swal.fire({
               title: 'Guardado exitoso',
@@ -1205,6 +1209,7 @@ export class DocentesComponent implements OnInit {
             icon: 'warning',
             title: 'Por favor verifique los campos de cesantias',
             showConfirmButton: true,
+            allowOutsideClick: false,
             timer: 2500,
           })
         }
